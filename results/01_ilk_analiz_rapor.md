@@ -60,12 +60,17 @@ Bu yüzden tüm kayıt ortalaması yanıltıcı: sistol (470 ms) ve diyastol (47
 
 Etiketleme yöntemi değiştirildi: global bir "ilk tepe S1 mi S2 mi" kararı yerine, her aralık **kendi başına** aralıkların medyanına göre kısa (sistol) / uzun (diyastol) sınıflandırılıyor; her tepenin etiketi yalnızca kendisinden sonra gelen aralığın sınıfına bağlı (bkz. `docs/notes/teorik_notlar.md` — "Düzeltme — Medyan Eşikli Yerel Sınıflandırma"). Bu değişiklik önceki hiçbir global "hafıza/toggle" durumu taşımadığı için bir anomalinin etkisini yalnızca kendi civarındaki 1-2 tepeyle sınırlıyor.
 
-**Sonuç (düzeltilmiş):**
+**Not:** Bu düzeltme daha önce bu raporda belgelenmişti ama gerçek notebook koduna (`label_s1_s2` fonksiyonu) hiç uygulanmamış olduğu fark edildi — kod hâlâ eski global-toggle yöntemini çalıştırıyordu. İnce ayar çalışması kapsamında bu tutarsızlık giderildi ve düzeltme gerçekten koda uygulanıp çalıştırıldı.
 
-- Tahmini kalp hızı: **63.3 bpm** (değişmedi)
-- Ortalama sistol süresi (S1→S2): **344 ms**
-- Ortalama diyastol süresi (S2→S1): **604 ms**
+### İnce Ayar — `find_peaks` distance Parametresi
 
-Sistol/diyastol artık net ve fizyolojik olarak makul biçimde ayrışıyor (sistol, toplam kalp döngüsünün ~%36'sı — istirahat halindeki tipik oranla uyumlu). Anomali bölgesi (13-16 sn arası) doğrulandığında, birkaç yerde art arda aynı etiket (örn. S2-S2) görülüyor — yani anomalinin olduğu yerde küçük yerel sapmalar hâlâ oluşuyor — ama önceki gibi kayıt sonuna kadar kalıcı bir tersine dönüş **yok**, birkaç tepe içinde kendini düzeltiyor.
+Düzeltilmiş etiketleme yöntemiyle bile anomali bölgesinde (13-16 sn) art arda aynı etiket (S2-S2-S2) görülüyordu. İncelemede kök neden bulundu: `detect_peaks` içindeki `min_distance_ms=200` değeri, birbirine 208-232 ms gibi fizyolojik olarak imkânsız kadar yakın iki sahte/gürültü kaynaklı tepeyi de kalp sesi tepesi olarak kabul ediyordu. `min_distance_ms` **250**'ye çıkarılınca bu 2 sahte tepe otomatik elendi ve aralık dağılımı temiz iki kümeye ayrıldı: sistol kümesi 290-390 ms, diyastol kümesi 539-734 ms, aralarında boşluk var — hiç kısa aykırı değer kalmadı.
 
-**Sonraki adım için not:** Kalan yerel sapmaları da azaltmak için (örn. `find_peaks` içindeki `distance`/`height` parametrelerini ayarlamak veya fizyolojik olarak imkânsız aralıkları filtrelemek) ek iyileştirme yapılabilir, ama bu artık kritik bir kaskad hatası değil, ince ayar seviyesinde bir konu.
+**Sonuç (düzeltme + ince ayar, gerçek çalıştırma):**
+
+- Toplam tespit edilen tepe: **73** (S1: 37, S2: 36) — önceki 75'ten 2 sahte tepe elendi
+- Tahmini kalp hızı: **61.5 bpm**
+- Ortalama sistol süresi (S1→S2): **352 ms**
+- Ortalama diyastol süresi (S2→S1): **623 ms**
+
+Sistol/diyastol net ve fizyolojik olarak makul biçimde ayrışıyor (sistol, toplam kalp döngüsünün ~%36'sı). Anomali bölgesinde (13-15 sn) hâlâ 3 art arda aynı etiket (S2-S2-S2) görülüyor, ancak bunun nedeni artık sahte bir tepe değil — bu bölgedeki gerçek aralıklardan biri (390 ms) medyana (380 ms) çok yakın bir sınır değeri, hangi tarafa sınıflandığı gürültü payı içinde. Kayıt gerçek (sentetik olmayan) bir kayıt olduğu için küçük düzensizlikler beklenebilir; birkaç tepe içinde kendini düzeltiyor, kalıcı bir kaskad **yok**. Bu, kabul edilebilir bir sınır durumu olarak not edildi; daha ileri gitmek (örn. zorla alternasyon uygulamak) tam olarak önceki hatalı yaklaşımın kendisi olurdu.

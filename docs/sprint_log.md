@@ -183,3 +183,32 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   ve atıf/lisans notu eklendi çünkü repo artık public.
 - **Sonuç:** 22 klasörün tamamında açıklayıcı README var. Henüz commit
   edilmedi (kullanıcı onayı bekleniyor).
+
+### 16. S1/S2 medyan düzeltmesi gerçekten koda uygulandı + ince ayar yapıldı
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (Bölüm 8,
+  `label_s1_s2` ve `detect_peaks` fonksiyonları, analiz hücresi), sonuç
+  `results/01_ilk_analiz_rapor.md`'ye eklendi.
+- **Ne yapıldı:**
+  - Önce bir tutarsızlık bulundu: madde 14'te "yapıldı" diye kaydedilen
+    medyan eşikli düzeltme, gerçek notebook koduna hiç uygulanmamıştı —
+    `label_s1_s2` hâlâ eski global-toggle yöntemini çalıştırıyordu (çıktı
+    hâlâ 470/479 ms gösteriyordu, 344/604 ms değil).
+  - Medyan eşikli yerel sınıflandırma gerçekten `label_s1_s2`'ye yazıldı;
+    sistol/diyastol ortalamaları da etiketlerden bağımsız, doğrudan
+    medyan eşiğine göre hesaplanacak şekilde analiz hücresi güncellendi.
+  - Anomali bölgesi (13-16 sn) incelendi: `detect_peaks`'teki
+    `min_distance_ms=200` değerinin, birbirine 208-232 ms gibi fizyolojik
+    olarak imkânsız yakınlıkta iki sahte tepeyi kabul ettiği bulundu.
+    `min_distance_ms` 250'ye çıkarıldı.
+  - Notebook `jupyter nbconvert --execute --inplace` ile yeniden
+    çalıştırılıp tüm çıktılar tazelendi.
+- **Neden:** Dokümantasyon (rapor/sprint log) ile gerçek kod arasındaki
+  tutarsızlığı gidermek, ve kullanıcının seçtiği sıradaki iş olan "S1/S2
+  ince ayarı"nı tamamlamak.
+- **Sonuç:** Sahte 2 tepe elendi (75 → 73 tepe), aralık dağılımı temiz iki
+  kümeye ayrıldı (sistol 290-390 ms, diyastol 539-734 ms, aralarında
+  boşluk, hiç kısa aykırı değer yok). Yeni sonuçlar: 61.5 bpm, sistol
+  352 ms, diyastol 623 ms. Anomali bölgesinde hâlâ 3 art arda aynı etiket
+  görülüyor ama artık sahte tepeden değil, medyana çok yakın (390 ms vs
+  380 ms medyan) bir sınır değerinden kaynaklanıyor — gerçek kayıttaki
+  küçük düzensizlik olarak kabul edilebilir, kalıcı kaskad yok.
