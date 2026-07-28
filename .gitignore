@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+*.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Data (generated/large, keep raw samples tracked)
+data/processed/
+data/exports/
+
+# ESP-IDF / PlatformIO firmware build artifacts
+firmware/**/build/
+firmware/**/.pio/
+firmware/**/sdkconfig.old
+firmware/**/managed_components/
+
+# KiCad backups/locks
+hardware/**/*.bak
+hardware/**/*-bak
+hardware/**/*.kicad_pcb-bak
+hardware/**/*.kicad_sch-bak
+hardware/**/fp-info-cache
+hardware/**/*.lck
+hardware/**/_autosave-*
+hardware/**/*~
+
+# ngspice sim outputs
+hardware/sim/**/*.raw
+hardware/sim/**/*.log
