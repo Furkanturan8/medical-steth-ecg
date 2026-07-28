@@ -117,3 +117,28 @@ Kendi bozulma (gürültüsüz filtrelenmiş sinyale wavelet uygulanınca): a0001
 Wavelet denoising, median filtreden farklı olarak **her seviyede ve her kayıtta** net kazanç sağlıyor (Orta/Güçlü/Aşırı'da +3 ile +8 dB arası) — tek istisna Hafif seviyede a0002 (-2.52 dB, önemsiz çünkü o seviyede SNR zaten ~23 dB). Daha önemlisi, **dayanıklılık sınırını gerçekten aşıyor**: Aşırı seviyede önceden negatif kalan SNR değerleri (a0001: -1.14→+6.04, a0002: -0.05→+5.02, a0003: -7.12→+1.04) pozitife çekildi.
 
 **Sonuç:** Wavelet denoising, band-pass+notch dayanıklılık sınırını aşmak için işe yarayan bir yöntem — median filtreden farklı olarak tutarlı ve düşük bozulmalı. Ancak ESP32 üzerinde gerçek zamanlı çalıştırmak (Aşama 4) hesaplama maliyeti açısından band-pass/notch'tan çok daha ağır; bu yüzden şimdilik yalnızca Python tarafında doğrulanmış bir yöntem olarak not ediliyor. Gömülü tarafa taşınıp taşınmayacağı Aşama 4'te (DMA/ADC performansı görüldükten sonra) değerlendirilecek.
+
+## Dinamik Gürültü Geçidi (Noise Gate)
+
+Bir arkadaşın önerdiği fikir test edildi: kalp sesi kesintili (S1/S2 arasında sessizlik var), zarfın (envelope) düşük olduğu "sessiz" bölgeleri tamamen sıfırlarsak aradaki kalıntı gürültü de sıfırlanır. Yöntem: zarfın 20. persentili "sessizlik seviyesi" kabul edilip 1.5 katı eşik alındı; zarf bu eşiğin altına düştüğü her noktada sinyal sıfırlandı. Median/wavelet denemelerindeki gibi katı karşılaştırma kullanıldı.
+
+| Seviye | Kayıt | SNR (band+notch) | SNR (+gate) | Fark |
+|---|---|---|---|---|
+| Hafif | a0001.wav | 22.39 | 15.41 | -6.99 |
+| Hafif | a0002.wav | 23.49 | 12.79 | -10.71 |
+| Hafif | a0003.wav | 16.33 | 13.89 | -2.45 |
+| Orta | a0001.wav | 12.82 | 11.86 | -0.95 |
+| Orta | a0002.wav | 13.96 | 10.73 | -3.23 |
+| Orta | a0003.wav | 6.86 | 8.57 | +1.71 |
+| Güçlü | a0001.wav | 4.33 | 7.17 | +2.84 |
+| Güçlü | a0002.wav | 5.47 | 5.76 | +0.30 |
+| Güçlü | a0003.wav | -1.65 | 3.41 | +5.06 |
+| Aşırı | a0001.wav | -1.11 | 4.08 | +5.19 |
+| Aşırı | a0002.wav | 0.01 | 2.66 | +2.65 |
+| Aşırı | a0003.wav | -7.11 | 0.01 | +7.12 |
+
+### Yorum
+
+Sonuç net bir çizgide ayrılıyor — gürültü seviyesine bağlı bir dönüm noktası var. Hafif/Orta seviyede gate SNR'ı düşürüyor (Hafif'te -2 ile -11 dB arası): gürültü zaten azken, sessiz bölgeleri sıfırlamanın kaybettirdiği gerçek sinyal, kazandığı gürültü azaltmasından fazla. Güçlü/Aşırı seviyede ise tam tersi — gate net kazanç sağlıyor (+0.3 ile +7 dB arası).
+
+**Sonuç:** Gate, median filtre gibi kayda bağlı değil, **gürültü seviyesine bağlı** koşullu bir fayda sağlıyor. Bu yüzden sabit bir adım olarak değil, yalnızca gürültü yüksek olduğunda devreye giren **adaptif bir adım** olarak düşünülmeli. Hesaplama açısından çok hafif (abs + persentil + karşılaştırma) — ESP32'de gerçek zamanlı çalıştırmak wavelet'ten çok daha kolay; donanım aşamasında (Aşama 4) denenmeye değer bir aday.

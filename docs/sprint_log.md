@@ -253,3 +253,25 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   ESP32'de gerçek zamanlı çalıştırmak hesaplama açısından ağır; Aşama
   4'e (donanım) taşınıp taşınmayacağı orada değerlendirilecek, şimdilik
   yalnızca Python tarafında doğrulanmış bir yöntem.
+
+### 19. Dinamik gürültü geçidi (noise gate) denendi
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (yeni
+  Bölüm 11), sonuç `results/01_ilk_analiz_rapor.md`'ye eklendi.
+- **Ne yapıldı:** Kullanıcının bir arkadaşının önerdiği fikir test
+  edildi: kalp sesi kesintili olduğu için, zarfın düşük olduğu "sessiz"
+  bölgeleri tamamen sıfırlayarak aradaki kalıntı gürültüyü de sıfırlamak.
+  Zarfın 20. persentili "sessizlik seviyesi" kabul edilip 1.5 katı eşik
+  alındı, band-pass+notch çıktısına uygulandı; median/wavelet
+  denemelerindeki gibi katı karşılaştırma kullanıldı.
+- **Neden:** Arkadaşın önerdiği yöntemi körü körüne kabul/reddetmek
+  yerine ölçerek karar vermek, önceki denemelerle (median, wavelet) aynı
+  disiplinle test etmek.
+- **Sonuç:** Median filtreden farklı bir örüntü bulundu — kayda bağlı
+  değil, **gürültü seviyesine bağlı** koşullu bir fayda. Hafif/Orta
+  seviyede SNR'ı düşürüyor (-2 ile -11 dB), Güçlü/Aşırı seviyede net
+  kazanç sağlıyor (+0.3 ile +7 dB) ve Aşırı'daki negatif SNR'ları
+  iyileştiriyor (wavelet'ten daha az güçlü ama aynı yönde). Sabit bir
+  adım olarak değil, gürültü yüksek olduğunda devreye giren adaptif bir
+  adım olarak not edildi. Hesaplama maliyeti çok düşük (abs+persentil) —
+  bu yüzden wavelet'ten farklı olarak ESP32'de gerçek zamanlı
+  çalıştırmak kolay; Aşama 4'te denenmeye değer bir aday.
