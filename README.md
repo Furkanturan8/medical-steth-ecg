@@ -1,8 +1,8 @@
 # Medikal Steteskop Gürültü Filtreleme ve ESP32 Entegrasyonu
 
-Bu proje, **MAX9814 tabanlı elektronik steteskop** sinyalindeki ortam gürültüsünü azaltmak, kalp seslerini daha temiz hale getirmek ve filtrelenmiş sinyali mevcut **ESP32 tabanlı EKG cihazına** entegre etmek amacıyla geliştirilmektedir. MAX9814, analog çıkış veren ve AGC içeren bir mikrofon yükselteç modülüdür; bu nedenle sistemin merkezinde analog ses toplama, ADC ile örnekleme ve dijital filtreleme yer alır [web:109][file:53].
+Bu proje, **MAX9814 tabanlı elektronik steteskop** sinyalindeki ortam gürültüsünü azaltmak, kalp seslerini daha temiz hale getirmek ve filtrelenmiş sinyali mevcut **ESP32 tabanlı EKG cihazına** entegre etmek amacıyla geliştirilmektedir. MAX9814, analog çıkış veren ve AGC içeren bir mikrofon yükselteç modülüdür; bu nedenle sistemin merkezinde analog ses toplama, ADC ile örnekleme ve dijital filtreleme yer alır.
 
-Projenin temel hedefi doğrudan “cihaz yapmak” değil, önce güvenilir bir **araştırma ve prototipleme platformu** kurmaktır. Bu platform üzerinden analog filtre tasarımı, sinyal analizi, gürültü karakterizasyonu ve gömülü yazılım geliştirmesi birlikte yürütülür [file:64][cite:65].
+Projenin temel hedefi doğrudan “cihaz yapmak” değil, önce güvenilir bir **araştırma ve prototipleme platformu** kurmaktır. Bu platform üzerinden analog filtre tasarımı, sinyal analizi, gürültü karakterizasyonu ve gömülü yazılım geliştirmesi birlikte yürütülür.
 
 ---
 
@@ -12,23 +12,23 @@ Bu çalışmanın amacı, steteskop başlığından alınan biyomedikal ses siny
 - Kalp sesi bileşenlerini daha anlaşılır hale getirmek,
 - Ortam gürültüsü, temas gürültüsü ve elektriksel parazitleri azaltmak,
 - Filtrelenmiş sesi/dijital veriyi mevcut ESP32 tabanlı EKG sistemine entegre etmek,
-- Gerekirse ileride EKG + steteskop verisini zaman eşlemeli işleyebilecek bir altyapı oluşturmaktır [file:64][file:35][cite:65].
+- Gerekirse ileride EKG + steteskop verisini zaman eşlemeli işleyebilecek bir altyapı oluşturmaktır.
 
 ---
 
 ## Problem Tanımı
 
-Steteskop ile alınan biyomedikal sesler düşük genliklidir ve kolayca bozulur [file:64]. Gürültü kaynakları yalnızca dış ortam sesi değildir; el teması, gövde titreşimi, kablo hareketi ve 50 Hz şebeke paraziti de sinyali bozabilir [file:64].
+Steteskop ile alınan biyomedikal sesler düşük genliklidir ve kolayca bozulur. Gürültü kaynakları yalnızca dış ortam sesi değildir; el teması, gövde titreşimi, kablo hareketi ve 50 Hz şebeke paraziti de sinyali bozabilir.
 
-Kalp sesi bileşenleri genellikle düşük frekans bölgesindedir. Kalp sesleri tipik olarak 20–500 Hz bandında yer alır ve enerjinin büyük kısmı 200 Hz altında yoğunlaşır; S1 genelde 20–100 Hz, S2 ise 50–200 Hz civarındadır [web:46][web:48]. Bu nedenle genel amaçlı ses işleme yerine **kalp sesi odaklı filtreleme** yaklaşımı gerekir [web:46][file:64].
+Kalp sesi bileşenleri genellikle düşük frekans bölgesindedir. Kalp sesleri tipik olarak 20–500 Hz bandında yer alır ve enerjinin büyük kısmı 200 Hz altında yoğunlaşır; S1 genelde 20–100 Hz, S2 ise 50–200 Hz civarındadır. Bu nedenle genel amaçlı ses işleme yerine **kalp sesi odaklı filtreleme** yaklaşımı gerekir.
 
 ---
 
 ## Sistem Özeti
 
-Sistemde steteskop tarafında kullanılan mikrofon modülü **MAX9814**’tür [file:53]. MAX9814; düşük gürültülü ön yükselteç, değişken kazanç katı, çıkış yükselteci ve AGC devresi içerir; analog çıkış verir ve toplam kazanç yapılandırmaya bağlı olarak 40 dB, 50 dB veya 60 dB olabilir [web:109][web:111].
+Sistemde steteskop tarafında kullanılan mikrofon modülü **MAX9814**’tür. MAX9814; düşük gürültülü ön yükselteç, değişken kazanç katı, çıkış yükselteci ve AGC devresi içerir; analog çıkış verir ve toplam kazanç yapılandırmaya bağlı olarak 40 dB, 50 dB veya 60 dB olabilir.
 
-Mevcut EKG cihazı hazırdır ve ESP32 içermektedir [file:35][cite:65]. Bu nedenle geliştirme önceliği EKG tarafı değil, steteskop sinyalinin temizlenmesi ve daha sonra bu kanalın ESP32’ye eklenmesidir [cite:65].
+Mevcut EKG cihazı hazırdır ve ESP32 içermektedir. Bu nedenle geliştirme önceliği EKG tarafı değil, steteskop sinyalinin temizlenmesi ve daha sonra bu kanalın ESP32’ye eklenmesidir.
 
 ---
 
@@ -37,11 +37,11 @@ Mevcut EKG cihazı hazırdır ve ESP32 içermektedir [file:35][cite:65]. Bu nede
 Sinyal akışı aşağıdaki gibidir:
 
 1. Steteskop başlığındaki mikrofon vücut içi akustik titreşimleri toplar.
-2. MAX9814 bu mikrofon sinyalini analog olarak yükseltir [web:109][file:53].
-3. Gerekirse analog ön filtre katı ile DC bileşen, düşük frekans temas gürültüsü ve yüksek frekanslı istenmeyen bileşenler bastırılır [file:64].
-4. ESP32, ADC continuous mode kullanarak analog sinyali sürekli örnekler; bu modda örnekler DMA ile belleğe aktarılır [web:114][web:75].
-5. Yazılım tarafında band-pass, notch, median veya daha ileri dijital filtreleme uygulanır [file:64].
-6. Filtrelenmiş veri seri port, BLE veya Wi-Fi ile dış ortama aktarılabilir ya da mevcut cihaz içinde başka işleme adımlarına verilebilir [cite:65][web:114].
+2. MAX9814 bu mikrofon sinyalini analog olarak yükseltir.
+3. Gerekirse analog ön filtre katı ile DC bileşen, düşük frekans temas gürültüsü ve yüksek frekanslı istenmeyen bileşenler bastırılır.
+4. ESP32, ADC continuous mode kullanarak analog sinyali sürekli örnekler; bu modda örnekler DMA ile belleğe aktarılır.
+5. Yazılım tarafında band-pass, notch, median veya daha ileri dijital filtreleme uygulanır.
+6. Filtrelenmiş veri seri port, BLE veya Wi-Fi ile dış ortama aktarılabilir ya da mevcut cihaz içinde başka işleme adımlarına verilebilir.
 
 ---
 
@@ -49,10 +49,10 @@ Sinyal akışı aşağıdaki gibidir:
 
 MAX9814 kullanımı pratik olsa da iki önemli mühendislik zorluğu getirir:
 
-- Modül analog çıkış verir; bu yüzden veri almak için ESP32 ADC kullanmak gerekir [web:109][web:114].
-- AGC devresi, ses seviyesini otomatik değiştirerek medikal ölçümlerde genlik tutarlılığını etkileyebilir [web:109][web:110].
+- Modül analog çıkış verir; bu yüzden veri almak için ESP32 ADC kullanmak gerekir.
+- AGC devresi, ses seviyesini otomatik değiştirerek medikal ölçümlerde genlik tutarlılığını etkileyebilir.
 
-Bu yüzden proje kapsamında yalnızca “ses geliyor mu” kontrolü değil, **ölçülebilir ve tekrarlanabilir sinyal davranışı** hedeflenmelidir [web:109][file:64].
+Bu yüzden proje kapsamında yalnızca “ses geliyor mu” kontrolü değil, **ölçülebilir ve tekrarlanabilir sinyal davranışı** hedeflenmelidir.
 
 ---
 
@@ -61,21 +61,21 @@ Bu yüzden proje kapsamında yalnızca “ses geliyor mu” kontrolü değil, **
 Bu proje üç katmanda geliştirilecektir:
 
 ### 1. Analog katman
-KiCad ve ngspice ile MAX9814 sonrası filtre devreleri simüle edilir. Amaç, kalp sesini mümkün olduğunca korurken gürültü bileşenlerini zayıflatacak analog ön katı belirlemektir [web:106][web:87].
+KiCad ve ngspice ile MAX9814 sonrası filtre devreleri simüle edilir. Amaç, kalp sesini mümkün olduğunca korurken gürültü bileşenlerini zayıflatacak analog ön katı belirlemektir.
 
 ### 2. Sinyal işleme katmanı
-Python ortamında kayıtlı veriler üzerinde FFT, spektral analiz, notch filtre, band-pass filtre ve diğer yöntemler test edilir. Böylece gömülü tarafa geçmeden önce hangi filtre zincirinin işe yaradığı doğrulanır [file:64].
+Python ortamında kayıtlı veriler üzerinde FFT, spektral analiz, notch filtre, band-pass filtre ve diğer yöntemler test edilir. Böylece gömülü tarafa geçmeden önce hangi filtre zincirinin işe yaradığı doğrulanır.
 
 ### 3. Gömülü katman
-ESP-IDF kullanılarak ESP32 üzerinde sürekli örnekleme, tampon yönetimi ve gerçek zamanlı filtreleme uygulanır. ESP32 ADC continuous mode sürücüsü, periyodik veya yüksek hızlı veri toplama uygulamaları için uygundur [web:114][web:94].
+ESP-IDF kullanılarak ESP32 üzerinde sürekli örnekleme, tampon yönetimi ve gerçek zamanlı filtreleme uygulanır. ESP32 ADC continuous mode sürücüsü, periyodik veya yüksek hızlı veri toplama uygulamaları için uygundur.
 
 ---
 
 ## Kullanılan Teknolojiler
 
-- **ESP32 / ESP-IDF**: Gömülü veri toplama ve filtreleme [web:94][web:114]
-- **MAX9814**: Analog mikrofon amplifikatörü ve AGC modülü [web:109][file:53]
-- **KiCad + ngspice**: Şema, PCB ve analog simülasyon [web:106][web:87]
+- **ESP32 / ESP-IDF**: Gömülü veri toplama ve filtreleme
+- **MAX9814**: Analog mikrofon amplifikatörü ve AGC modülü
+- **KiCad + ngspice**: Şema, PCB ve analog simülasyon
 - **Python + NumPy + SciPy + Matplotlib**: Sinyal analizi ve algoritma doğrulama
 - **Jupyter Notebook**: Deneysel filtre analizi ve görselleştirme
 
@@ -132,12 +132,12 @@ Bu yapı; donanım, simülasyon, gömülü yazılım ve veri analizini birbirind
 - Filtre öncesi / sonrası spektrumu karşılaştır
 
 ### Aşama 4 — ESP32 gerçek zamanlı çalışma
-- ADC continuous mode ile veri toplama [web:114]
+- ADC continuous mode ile veri toplama
 - DMA buffer yönetimi
 - Basit filtreleri gömülü tarafta çalıştırma
 
 ### Aşama 5 — Mevcut EKG cihazına entegrasyon
-- Steteskop kanalını mevcut karta bağlama [file:35]
+- Steteskop kanalını mevcut karta bağlama
 - Zaman damgası eşleme
 - Gerekirse ortak veri akışı tasarlama
 
@@ -147,18 +147,18 @@ Bu yapı; donanım, simülasyon, gömülü yazılım ve veri analizini birbirind
 
 İlk prototip başarılı sayılmak için aşağıdaki maddeleri sağlamalıdır:
 
-- MAX9814 çıkışından kararlı ham veri okunabilmeli [file:53][web:109]
-- Ham verinin frekans içeriği analiz edilebilmeli [file:64]
-- En az bir filtreleme yöntemiyle gürültü görünür biçimde azaltılabilmeli [file:64][web:46]
-- ESP32 üzerinde sürekli örnekleme kararlı çalışmalı [web:114]
-- Filtrelenmiş sinyal mevcut sistem mimarisine bağlanabilir hale gelmeli [file:35][cite:65]
+- MAX9814 çıkışından kararlı ham veri okunabilmeli
+- Ham verinin frekans içeriği analiz edilebilmeli
+- En az bir filtreleme yöntemiyle gürültü görünür biçimde azaltılabilmeli
+- ESP32 üzerinde sürekli örnekleme kararlı çalışmalı
+- Filtrelenmiş sinyal mevcut sistem mimarisine bağlanabilir hale gelmeli
 
 ---
 
 ## Kurulum Özeti
 
 ### ESP-IDF
-Espressif, macOS üzerinde ESP-IDF kurulumu için resmi kurulum adımları sunmaktadır [web:94].
+Espressif, macOS üzerinde ESP-IDF kurulumu için resmi kurulum adımları sunmaktadır.
 
 ```bash
 brew install python cmake ninja dfu-util git
@@ -181,15 +181,15 @@ pip install numpy scipy matplotlib jupyter pyserial pandas
 
 ## Notlar
 
-Bu proje bir klinik ürün değil, araştırma ve prototipleme çalışmasıdır. Medikal güvenlik, izolasyon, kalibrasyon ve regülasyon gereksinimleri prototip sonrasında ayrıca ele alınmalıdır [file:64].
+Bu proje bir klinik ürün değil, araştırma ve prototipleme çalışmasıdır. Medikal güvenlik, izolasyon, kalibrasyon ve regülasyon gereksinimleri prototip sonrasında ayrıca ele alınmalıdır.
 
-Ayrıca bu projede öncelik doğrudan “en iyi algoritma” değil, önce güvenilir veri toplamak ve sistem davranışını anlamaktır. Çünkü hatalı veya dengesiz giriş verisi üzerinde yapılan filtreleme çalışmaları yanıltıcı sonuçlar üretebilir [file:64][web:109].
+Ayrıca bu projede öncelik doğrudan “en iyi algoritma” değil, önce güvenilir veri toplamak ve sistem davranışını anlamaktır. Çünkü hatalı veya dengesiz giriş verisi üzerinde yapılan filtreleme çalışmaları yanıltıcı sonuçlar üretebilir.
 
 ---
 
 ## Kaynaklar
 
-- Gülin Ütebay, *Kablosuz Elektronik Steteskop Tasarımı ve Bilgisayar Ortamında Görüntülenmesi* [file:64]
-- MAX9814 datasheet [web:109]
-- ESP-IDF ADC Continuous Mode Driver [web:114]
-- Kalp sesi frekans aralıkları üzerine PCG kaynakları [web:46][web:48]
+- Gülin Ütebay, *Kablosuz Elektronik Steteskop Tasarımı ve Bilgisayar Ortamında Görüntülenmesi*
+- MAX9814 datasheet
+- ESP-IDF ADC Continuous Mode Driver
+- Kalp sesi frekans aralıkları üzerine PCG kaynakları
