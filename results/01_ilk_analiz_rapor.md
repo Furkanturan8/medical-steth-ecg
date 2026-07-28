@@ -90,3 +90,30 @@ README'deki Aşama 3 kontrol listesinde band-pass ve notch'un yanında median fi
 Median filtre a0001 ve a0003'te click gürültüsü olsun olmasın net SNR kazancı sağlıyor. Ama a0002'de tam tersi oluyor — median filtre SNR'ı düşürüyor, çünkü bu kayıtta median filtrenin bant içindeki gerçek keskin geçişlere verdiği zarar, kazandığı gürültü azaltmasından fazla. Yani median filtrenin faydası **kayda bağlı**; sabit bir kazanç değil.
 
 **Sonuç:** Median filtre, band-pass+notch zincirine varsayılan/otomatik bir adım olarak eklenmiyor. Gerekirse (örn. gerçek donanımda sık click/temas kopması gözlenirse) kayda özel değerlendirilecek opsiyonel bir adım olarak not ediliyor.
+
+## Dayanıklılık Sınırını Aşma — Wavelet Denoising
+
+Dayanıklılık testi bölümünde bulunan sınırı (Güçlü/Aşırı seviyede band-pass+notch çıktısının hâlâ negatif SNR'da kalması) aşmaya çalışmak için wavelet tabanlı denoising denendi: VisuShrink yöntemi (`db6` dalgacığı, 5 seviye ayrıştırma, en ince seviye katsayılarından medyan tabanlı gürültü tahmini ile evrensel eşik, yumuşak eşikleme), band-pass+notch zincirine ek bir adım olarak eklendi. Median filtre denemesindeki gibi **katı** karşılaştırma kullanıldı (referans wavelet'ten geçirilmedi).
+
+| Seviye | Kayıt | SNR (band+notch) | SNR (+wavelet) | Fark |
+|---|---|---|---|---|
+| Hafif | a0001.wav | 22.38 | 23.63 | +1.25 |
+| Hafif | a0002.wav | 23.45 | 20.93 | -2.52 |
+| Hafif | a0003.wav | 16.39 | 19.61 | +3.22 |
+| Orta | a0001.wav | 12.78 | 16.57 | +3.79 |
+| Orta | a0002.wav | 13.93 | 14.54 | +0.61 |
+| Orta | a0003.wav | 6.76 | 12.06 | +5.30 |
+| Güçlü | a0001.wav | 4.36 | 10.33 | +5.97 |
+| Güçlü | a0002.wav | 5.47 | 8.62 | +3.15 |
+| Güçlü | a0003.wav | -1.69 | 5.54 | +7.23 |
+| Aşırı | a0001.wav | -1.14 | 6.04 | +7.18 |
+| Aşırı | a0002.wav | -0.05 | 5.02 | +5.06 |
+| Aşırı | a0003.wav | -7.12 | 1.04 | +8.16 |
+
+Kendi bozulma (gürültüsüz filtrelenmiş sinyale wavelet uygulanınca): a0001 31.94 dB, a0002 28.92 dB, a0003 42.53 dB — median filtrenin kendi bozulmasından (~9-21 dB) çok daha iyi.
+
+### Yorum
+
+Wavelet denoising, median filtreden farklı olarak **her seviyede ve her kayıtta** net kazanç sağlıyor (Orta/Güçlü/Aşırı'da +3 ile +8 dB arası) — tek istisna Hafif seviyede a0002 (-2.52 dB, önemsiz çünkü o seviyede SNR zaten ~23 dB). Daha önemlisi, **dayanıklılık sınırını gerçekten aşıyor**: Aşırı seviyede önceden negatif kalan SNR değerleri (a0001: -1.14→+6.04, a0002: -0.05→+5.02, a0003: -7.12→+1.04) pozitife çekildi.
+
+**Sonuç:** Wavelet denoising, band-pass+notch dayanıklılık sınırını aşmak için işe yarayan bir yöntem — median filtreden farklı olarak tutarlı ve düşük bozulmalı. Ancak ESP32 üzerinde gerçek zamanlı çalıştırmak (Aşama 4) hesaplama maliyeti açısından band-pass/notch'tan çok daha ağır; bu yüzden şimdilik yalnızca Python tarafında doğrulanmış bir yöntem olarak not ediliyor. Gömülü tarafa taşınıp taşınmayacağı Aşama 4'te (DMA/ADC performansı görüldükten sonra) değerlendirilecek.

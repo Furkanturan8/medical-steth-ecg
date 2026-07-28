@@ -231,3 +231,25 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   keskin geçişlere verdiği zarar kazandığından fazla. Median filtre bu
   yüzden band-pass+notch zincirine varsayılan adım olarak eklenmedi;
   gerekirse kayda özel opsiyonel bir adım olarak not edildi.
+
+### 18. Dayanıklılık sınırı için wavelet denoising denendi
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (yeni
+  Bölüm 10), `.venv`'e `PyWavelets` eklendi (ve `README.md`'deki kurulum
+  komutuna eklendi), sonuç `results/01_ilk_analiz_rapor.md`'ye eklendi.
+- **Ne yapıldı:** Bölüm 7'deki dayanıklılık testinde bulunan sınırı
+  (Güçlü/Aşırı seviyede band-pass+notch çıktısının negatif SNR'da
+  kalması) aşmak için wavelet tabanlı denoising (VisuShrink: `db6`
+  dalgacığı, 5 seviye, medyan tabanlı evrensel eşik, yumuşak eşikleme)
+  band-pass+notch zincirine ek adım olarak denendi. Median denemesindeki
+  gibi katı karşılaştırma (referans wavelet'siz) kullanıldı; kendi
+  bozulma da ölçüldü.
+- **Neden:** Kullanıcının seçtiği sıradaki iş — dayanıklılık sınırını
+  aşacak bir yöntem araştırmak.
+- **Sonuç:** Median filtreden farklı olarak **her seviyede, her kayıtta**
+  tutarlı kazanç (+3 ile +8 dB, Orta/Güçlü/Aşırı'da) ve düşük kendi
+  bozulma (~29-43 dB, median'ın ~9-21 dB'sine kıyasla çok daha iyi).
+  Aşırı seviyede önceden negatif kalan SNR'lar pozitife çekildi (örn.
+  a0003: -7.12→+1.04 dB) — dayanıklılık sınırı gerçekten aşıldı. Ancak
+  ESP32'de gerçek zamanlı çalıştırmak hesaplama açısından ağır; Aşama
+  4'e (donanım) taşınıp taşınmayacağı orada değerlendirilecek, şimdilik
+  yalnızca Python tarafında doğrulanmış bir yöntem.

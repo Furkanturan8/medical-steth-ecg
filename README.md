@@ -174,7 +174,7 @@ cd esp-idf
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install numpy scipy matplotlib jupyter pyserial pandas
+pip install numpy scipy matplotlib jupyter pyserial pandas PyWavelets
 ```
 
 ---
