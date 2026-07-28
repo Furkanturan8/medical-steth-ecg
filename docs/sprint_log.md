@@ -212,3 +212,22 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   görülüyor ama artık sahte tepeden değil, medyana çok yakın (390 ms vs
   380 ms medyan) bir sınır değerinden kaynaklanıyor — gerçek kayıttaki
   küçük düzensizlik olarak kabul edilebilir, kalıcı kaskad yok.
+
+### 17. Median filtre denemesi yapıldı
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (yeni Bölüm 9),
+  sonuç `results/01_ilk_analiz_rapor.md`'ye eklendi.
+- **Ne yapıldı:** README'nin Aşama 3 kontrol listesinde geçen ama hiç
+  denenmemiş median filtre test edildi. Mevcut gürültü modelinin (beyaz+hum+
+  hareket) median filtrenin hedef gürültü tipi olmadığı fark edildiği için
+  önce darbesel/impulsif "click" gürültüsü (`add_click_noise`) eklendi.
+  Band-pass+notch zincirine median filtre eklenip eklenmemesi, click olan/
+  olmayan durumlarda, **katı** karşılaştırmayla (referans median'dan
+  geçirilmeden) 3 kayıt üzerinde ölçüldü.
+- **Neden:** Median filtrenin gerçekten faydalı olup olmadığını, körü
+  körüne zincire eklemek yerine ölçerek karar vermek.
+- **Sonuç:** Karışık/kayda bağlı sonuç — a0001 ve a0003'te median filtre
+  net SNR kazancı sağlıyor (+2.7 ile +5.5 dB arası), ama a0002'de SNR'ı
+  düşürüyor (-1.6 ile -5.8 dB) çünkü median filtrenin bant içi gerçek
+  keskin geçişlere verdiği zarar kazandığından fazla. Median filtre bu
+  yüzden band-pass+notch zincirine varsayılan adım olarak eklenmedi;
+  gerekirse kayda özel opsiyonel bir adım olarak not edildi.

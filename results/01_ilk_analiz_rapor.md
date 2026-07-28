@@ -74,3 +74,19 @@ Düzeltilmiş etiketleme yöntemiyle bile anomali bölgesinde (13-16 sn) art ard
 - Ortalama diyastol süresi (S2→S1): **623 ms**
 
 Sistol/diyastol net ve fizyolojik olarak makul biçimde ayrışıyor (sistol, toplam kalp döngüsünün ~%36'sı). Anomali bölgesinde (13-15 sn) hâlâ 3 art arda aynı etiket (S2-S2-S2) görülüyor, ancak bunun nedeni artık sahte bir tepe değil — bu bölgedeki gerçek aralıklardan biri (390 ms) medyana (380 ms) çok yakın bir sınır değeri, hangi tarafa sınıflandığı gürültü payı içinde. Kayıt gerçek (sentetik olmayan) bir kayıt olduğu için küçük düzensizlikler beklenebilir; birkaç tepe içinde kendini düzeltiyor, kalıcı bir kaskad **yok**. Bu, kabul edilebilir bir sınır durumu olarak not edildi; daha ileri gitmek (örn. zorla alternasyon uygulamak) tam olarak önceki hatalı yaklaşımın kendisi olurdu.
+
+## Median Filtre Denemesi
+
+README'deki Aşama 3 kontrol listesinde band-pass ve notch'un yanında median filtre de sayılıyor ama şimdiye kadar denenmemişti. Mevcut sentetik gürültü modeli (beyaz gürültü + hum + hareket artefaktı) median filtrenin asıl güçlü olduğu tür değil — median filtre kısa **darbesel** (impulsif) gürültüde işe yarar (örn. steteskop temasının anlık kopması/kablo çarpması gibi "click" sesleri). Bu yüzden test için önce bu tür bir gürültü eklendi, sonra band-pass+notch zincirine median filtre eklenip **katı** bir karşılaştırma yapıldı: referans sinyal median filtreden geçirilmedi (band-pass/notch denemesindeki "adil karşılaştırma" mantığının tersine) — çünkü median filtre, notch/band-pass gibi bant dışını atmıyor, bant içindeki gerçek keskin geçişleri (S1/S2 başlangıcı gibi) de düzleştirebilir. Referansı da median'dan geçirmek bu bozulmayı gizlerdi.
+
+| Kayıt | Click yok, median yok (dB) | Click yok, median var (dB) | Click var, median yok (dB) | Click var, median var (dB) |
+|---|---|---|---|---|
+| a0001.wav | 12.82 | 16.14 | 8.83 | 11.53 |
+| a0002.wav | 13.93 | 8.15 | 8.37 | 6.78 |
+| a0003.wav | 6.85 | 10.83 | 2.41 | 5.23 |
+
+### Yorum
+
+Median filtre a0001 ve a0003'te click gürültüsü olsun olmasın net SNR kazancı sağlıyor. Ama a0002'de tam tersi oluyor — median filtre SNR'ı düşürüyor, çünkü bu kayıtta median filtrenin bant içindeki gerçek keskin geçişlere verdiği zarar, kazandığı gürültü azaltmasından fazla. Yani median filtrenin faydası **kayda bağlı**; sabit bir kazanç değil.
+
+**Sonuç:** Median filtre, band-pass+notch zincirine varsayılan/otomatik bir adım olarak eklenmiyor. Gerekirse (örn. gerçek donanımda sık click/temas kopması gözlenirse) kayda özel değerlendirilecek opsiyonel bir adım olarak not ediliyor.
