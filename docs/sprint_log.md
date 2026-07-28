@@ -275,3 +275,32 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   adım olarak not edildi. Hesaplama maliyeti çok düşük (abs+persentil) —
   bu yüzden wavelet'ten farklı olarak ESP32'de gerçek zamanlı
   çalıştırmak kolay; Aşama 4'te denenmeye değer bir aday.
+
+### 20. Donanıma hazırlık simülasyonu — causal filtre + hafif zarf dedektörü
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (yeni
+  Bölüm 12), sonuç `results/01_ilk_analiz_rapor.md`'ye eklendi.
+- **Ne yapıldı:** Arkadaşın önerdiği 1. ve 2. fikirler test edildi:
+  - Şu ana kadarki filtreler (`sosfiltfilt`/`filtfilt`) çift geçişli,
+    ESP32'de gerçek zamanlı çalışamaz. `sosfilt`+`lfilter` ile tek
+    geçişli (causal) versiyonu test edildi, offline versiyonla SNR
+    karşılaştırıldı (her ikisi de kendi referansına göre, adil
+    karşılaştırma).
+  - `sosfilt`'in içeride yaptığı biquad döngüsü (`y[n]=b0*w0+b1*w1+b2*w2`,
+    Direct Form II Transposed) elle Python'da yazılıp scipy çıktısıyla
+    bit düzeyinde karşılaştırıldı — bu döngünün C'ye birebir
+    çevrilebileceğini kanıtlamak için.
+  - Hilbert dönüşümüne alternatif olarak abs+hareketli ortalama tabanlı
+    hafif bir zarf dedektörü (`compute_envelope_lightweight`) yazıldı,
+    farklı pencere uzunlukları denendi, S1/S2 sonuçları Hilbert'le
+    karşılaştırıldı (hem temiz hem Orta gürültülü sinyalde).
+- **Neden:** Kullanıcının seçtiği yön — donanım gelmeden önce, ESP32'de
+  gerçekten çalışacak (gerçek zamanlı, hafif) versiyonları hazırlayıp
+  doğrulamak.
+- **Sonuç:** Causal filtre offline'a kıyasla ihmal edilebilir kayıpla
+  (<0.6 dB, her seviyede) çalışıyor. Elle yazılan fark denklemi döngüsü
+  scipy ile 2.18e-14 farkla (kayan nokta hassasiyeti) eşleşti — katsayı
+  ve döngü doğrudan C'ye taşınabilir. Hafif zarf dedektörü 30ms
+  pencerede Hilbert'e çok yakın sonuç verdi (temiz sinyalde 74 vs 73
+  tepe, gürültülü sinyalde 76 vs 75 tepe) — daha büyük pencerelerde
+  (80ms+) sahte tepe sayısı hızla arttı. Aşama 4'e geçildiğinde bu iki
+  fonksiyon doğrudan C koduna taşınmaya hazır.

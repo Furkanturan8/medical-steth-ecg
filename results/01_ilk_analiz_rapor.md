@@ -142,3 +142,47 @@ Bir arkadaşın önerdiği fikir test edildi: kalp sesi kesintili (S1/S2 arasın
 Sonuç net bir çizgide ayrılıyor — gürültü seviyesine bağlı bir dönüm noktası var. Hafif/Orta seviyede gate SNR'ı düşürüyor (Hafif'te -2 ile -11 dB arası): gürültü zaten azken, sessiz bölgeleri sıfırlamanın kaybettirdiği gerçek sinyal, kazandığı gürültü azaltmasından fazla. Güçlü/Aşırı seviyede ise tam tersi — gate net kazanç sağlıyor (+0.3 ile +7 dB arası).
 
 **Sonuç:** Gate, median filtre gibi kayda bağlı değil, **gürültü seviyesine bağlı** koşullu bir fayda sağlıyor. Bu yüzden sabit bir adım olarak değil, yalnızca gürültü yüksek olduğunda devreye giren **adaptif bir adım** olarak düşünülmeli. Hesaplama açısından çok hafif (abs + persentil + karşılaştırma) — ESP32'de gerçek zamanlı çalıştırmak wavelet'ten çok daha kolay; donanım aşamasında (Aşama 4) denenmeye değer bir aday.
+
+## Donanıma Hazırlık — Gerçek Zamanlı Filtre ve Hafif Zarf Dedektörü
+
+Şu ana kadar kullanılan `sosfiltfilt`/`filtfilt` çift geçişli (offline) filtreler ESP32'de gerçek zamanlı çalışamaz — gelecekteki örneklere ihtiyaç duyarlar. Bu bölümde iki şey doğrulandı:
+
+### Fark denklemi doğrulaması
+
+`scipy.signal.sosfilt`'in içeride yaptığı biquad kademe döngüsü (`y[n] = b0*w0 + b1*w1 + b2*w2`, Direct Form II Transposed) elle Python'da yazıldı ve scipy'nin kendi çıktısıyla karşılaştırıldı: en büyük fark **2.18e-14** — kayan noktalı sayı hassasiyeti seviyesinde, yani aynı. Bu, bu katsayı ve döngünün doğrudan C koduna (ESP32) taşınabileceğini kanıtlıyor.
+
+### Causal (tek geçişli) filtre — SNR karşılaştırması
+
+| Seviye | Kayıt | SNR (offline) | SNR (causal) | Fark |
+|---|---|---|---|---|
+| Hafif | a0001.wav | 22.34 | 22.17 | -0.17 |
+| Hafif | a0002.wav | 23.51 | 22.97 | -0.54 |
+| Hafif | a0003.wav | 16.36 | 16.56 | +0.20 |
+| Orta | a0001.wav | 12.81 | 12.63 | -0.17 |
+| Orta | a0002.wav | 13.92 | 13.38 | -0.53 |
+| Orta | a0003.wav | 6.90 | 7.06 | +0.17 |
+| Güçlü | a0001.wav | 4.32 | 4.18 | -0.14 |
+| Güçlü | a0002.wav | 5.30 | 4.86 | -0.44 |
+| Güçlü | a0003.wav | -1.68 | -1.40 | +0.28 |
+| Aşırı | a0001.wav | -1.14 | -1.24 | -0.10 |
+| Aşırı | a0002.wav | -0.08 | -0.49 | -0.41 |
+| Aşırı | a0003.wav | -7.14 | -6.85 | +0.29 |
+
+Fark her durumda 0.6 dB'nin altında — gerçek zamanlı (causal) filtreye geçince ihmal edilebilir bir performans kaybı var.
+
+### Hafif zarf dedektörü (abs + hareketli ortalama)
+
+Hilbert dönüşümü FFT gerektirdiği için ESP32'de pahalı. Alternatif: mutlak değer + hareketli ortalama. Pencere uzunluğu denemesi (temiz sinyal, a0001):
+
+| Yöntem | Tepe sayısı | Kalp hızı (bpm) | Sistol (ms) | Diyastol (ms) |
+|---|---|---|---|---|
+| Hilbert (referans) | 73 | 61.5 | 352 | 623 |
+| Hafif, pencere=30ms | 74 | 62.7 | 351 | 606 |
+| Hafif, pencere=50ms | 75 | 63.3 | 355 | 593 |
+| Hafif, pencere=80ms | 87 | 73.6 | 325 | 491 |
+| Hafif, pencere=100ms | 96 | 81.4 | 302 | 436 |
+| Hafif, pencere=150ms | 104 | 88.2 | 282 | 398 |
+
+30ms pencere seçildi (Hilbert'e en yakın). Orta gürültülü, filtrelenmiş sinyalde (gerçek kullanım senaryosuna daha yakın) karşılaştırma: Hilbert 75 tepe / 63.3 bpm / sistol 349ms / diyastol 599ms; Hafif (30ms) 76 tepe / 64.8 bpm / sistol 346ms / diyastol 580ms — neredeyse birebir aynı.
+
+**Sonuç:** Causal filtre + hafif zarf dedektörü, offline/Hilbert versiyonlarına çok yakın performans veriyor ve ikisi de ESP32'de gerçek zamanlı çalışacak şekilde tasarlandı. `manual_sos_filter` mantığı (biquad kademeleri) ve `compute_envelope_lightweight` mantığı (abs + hareketli ortalama), Aşama 4'te (ESP32) doğrudan C koduna taşınabilecek temel yapı taşları.
