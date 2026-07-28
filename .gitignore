@@ -23,8 +23,10 @@ Thumbs.db
 *.swp
 
 # Data (generated/large, keep raw samples tracked)
-data/processed/
-data/exports/
+data/processed/*
+!data/processed/README.md
+data/exports/*
+!data/exports/README.md
 
 # ESP-IDF / PlatformIO firmware build artifacts
 firmware/**/build/

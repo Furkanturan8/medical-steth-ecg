@@ -167,3 +167,19 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   etiket (yerel sapma) hâlâ oluşuyor ama kalıcı kaskad **yok** — birkaç tepe
   içinde kendini düzeltiyor. Kalan yerel sapmalar ince ayar seviyesinde,
   kritik değil.
+
+### 15. Tüm klasörlere README eklendi
+- **Nerede:** Proje kökündeki her klasöre (`data/` ve alt klasörleri,
+  `docs/` ve alt klasörleri, `firmware/`, `hardware/` ve alt klasörleri,
+  `results/`, `scripts/`, `signal_processing/` ve alt klasörleri) birer
+  `README.md`. Ayrıca `.gitignore`, `data/processed/` ve `data/exports/`
+  klasörlerini bütünüyle değil, içeriklerini yok sayacak şekilde düzeltildi
+  (`data/processed/*` + `!data/processed/README.md` deseni) — aksi halde bu
+  klasörlerdeki README'ler git'e hiç girmeyecekti.
+- **Neden:** Proje GitHub'da public'e açıldı ve arkadaşlar repoyu
+  görecek; boş/açıklamasız klasörler kafa karıştırıyordu. Her klasörde ne
+  amaçlandığı ve şu an boşsa neden boş olduğu netleştirilmek istendi.
+  `data/raw/physionet-cinc2016-a/README.md`'ye ayrıca veri setinin kaynağı
+  ve atıf/lisans notu eklendi çünkü repo artık public.
+- **Sonuç:** 22 klasörün tamamında açıklayıcı README var. Henüz commit
+  edilmedi (kullanıcı onayı bekleniyor).
