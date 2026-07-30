@@ -47,3 +47,5 @@ hardware/**/*~
 # ngspice sim outputs
 hardware/sim/**/*.raw
 hardware/sim/**/*.log
+
+data/raw/own_recordings/*.wav

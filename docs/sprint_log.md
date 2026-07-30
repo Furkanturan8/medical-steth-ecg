@@ -304,3 +304,36 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   tepe, gürültülü sinyalde 76 vs 75 tepe) — daha büyük pencerelerde
   (80ms+) sahte tepe sayısı hızla arttı. Aşama 4'e geçildiğinde bu iki
   fonksiyon doğrudan C koduna taşınmaya hazır.
+
+### 21. İlk donanım kaydı başarıyla alındı — Aşama 4 başladı
+- **Nerede:** `firmware/esp32_steth/esp32_steth.ino` (yeni),
+  `scripts/record_from_esp32.py` (yeni), `data/raw/own_recordings/`
+  (yeni — 3 kayıt), ilgili README'ler (`firmware/README.md`,
+  `firmware/esp32_steth/README.md`, `scripts/README.md`,
+  `data/raw/own_recordings/README.md`) ve kök `README.md` güncellendi.
+- **Ne yapıldı:** Kullanıcı MAX9814 + ESP32 ile gerçek donanımdan ilk kez
+  ses kaydı almayı başardı. Kod proje köküne `kod1.c++`/`kod2.py` olarak
+  bırakılmıştı, doğru klasörlere taşındı ve isimlendirildi:
+  - `esp32_steth.ino` — Arduino framework ile yazılmış ESP32 sketch'i;
+    `analogRead` ile 16 kHz örnekleme yapıp 16-bit imzalı PCM'e çevirip
+    Serial üzerinden (`"START"`/`"END"` işaretli) gönderiyor.
+  - `record_from_esp32.py` — Serial'den PCM veriyi okuyup WAV'a yazan
+    Python karşılama script'i.
+  - Kullanıcı ve arkadaşlarından (abdul, muhammed, nadeem) alınan 3 kalp
+    sesi kaydı `data/raw/own_recordings/` altına eklendi (16 kHz, 16-bit
+    mono WAV).
+  - Not düşüldü: `.ino` dosyasındaki yorum `GPIO36` diyor ama kod
+    `MIC_PIN = 34` kullanıyor — bağlantı kontrol edilmeli. Ayrıca
+    `record_from_esp32.py` içindeki `PORT = "COM7"` Windows'a özel,
+    macOS'ta kullanılmadan önce değiştirilmesi gerekiyor.
+- **Neden:** Proje başta ESP-IDF ile planlanmıştı (README'nin Aşama 4
+  tanımı), ama kullanıcı önce Arduino framework ile daha hızlı, çalışan
+  bir uçtan uca zincir kurdu — bu ilerlemeyi kaybetmemek ve doğru
+  klasörlere yerleştirip belgelemek için taşıma/README güncellemesi
+  yapıldı.
+- **Sonuç:** Artık PhysioNet'in 3 dış kaydına ek olarak, kendi
+  donanımımızdan 3 gerçek kayıt var (toplam 6). Aşama 3'te doğrulanan
+  filtre zincirinin (causal band-pass+notch, hafif zarf dedektörü vb.)
+  bu yeni kayıtlarla da test edilmesi sıradaki iş. Aşama 4 (ESP32 gerçek
+  zamanlı çalışma) fiilen başlamış oldu; ADC continuous mode/DMA gibi
+  ESP-IDF gerektiren ileri adımlar henüz yapılmadı.

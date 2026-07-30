@@ -63,8 +63,14 @@ Median filtre, ani "click/pat" tarzı gürültüye iyi gelir (kablo çarpması g
 
 Daha akıllı bir gürültü temizleme yöntemi denedik (wavelet denoising — sinyali farklı "ölçeklerde" inceleyip sadece gürültü kısmını temizliyor). Bu, 7. adımda bulduğumuz sınırı gerçekten aştı: en kötü gürültü seviyesinde bile SNR'ı negatiften pozitife çekti, ve median filtre gibi bazen zarar vermedi — her kayıtta tutarlı fayda sağladı. Tek dezavantajı: hesaplama açısından ağır, küçük bir işlemci (ESP32) üzerinde gerçek zamanlı çalıştırmak zor olabilir — bu yüzden şimdilik not olarak duruyor.
 
+### 11. İlk gerçek donanım kaydı
+
+Bekleme bitti — MAX9814 mikrofonu ESP32'ye bağlayıp gerçek bir ses kaydı almayı başardık. ESP32 üzerinde çalışan küçük bir program (Arduino ile yazıldı) mikrofonu sürekli örnekliyor ve veriyi kablo üzerinden (Serial) bilgisayara yolluyor; bilgisayar tarafındaki bir Python programı da bu veriyi toplayıp standart bir ses dosyası (WAV) haline getiriyor.
+
+Bu sayede artık elimizde PhysioNet'ten indirdiğimiz 3 dış kayda ek olarak, kendi steteskopumuzla kaydettiğimiz 3 gerçek kalp sesi kaydı da var (kullanıcı ve iki arkadaşından).
+
 ## Genel Resim
 
-Şu ana kadar yaptığımız her şey **"donanım gelmeden önce yazılımda prova"** aşaması (README'deki Aşama 3). Gerçek MAX9814 mikrofonunu hiç bağlamadık, gerçek bir devre (analog filtre) hiç kurmadık — onlar Aşama 1 ve 2, henüz yapılmadı.
+Şu ana kadarki iş, README'deki Aşama 3'ü (yazılımda prova) tamamladı ve Aşama 4'ü (gerçek donanım) fiilen başlattı. Artık gerçek MAX9814 mikrofonu bağlı ve gerçek kayıt alabiliyoruz — bu daha önce planlanmış ama henüz yapılmamış bir adımdı.
 
-Şu anki kazancımız: hangi filtrenin işe yaradığını, hangisinin yaramadığını ve sınırların nerede olduğunu gerçek insan verisiyle, sayısal olarak öğrenmiş olmamız. Donanım geldiğinde artık kör kör denemek yerine, "bu filtreler işe yarıyor, bunlar yaramıyor" bilgisiyle başlayacağız.
+Şu anki kazancımız: hangi filtrenin işe yaradığını, hangisinin yaramadığını ve sınırların nerede olduğunu gerçek insan verisiyle, sayısal olarak öğrenmiş olmamız — üstelik artık bunu kendi donanımımızdan gelen gerçek kayıtlarla da test edebiliyoruz. Sıradaki iş, Aşama 3'te doğrulanan filtreleri bu yeni kendi kayıtlarımıza uygulayıp aynı şekilde çalışıp çalışmadığını görmek.

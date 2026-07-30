@@ -1,11 +1,13 @@
 # firmware/
 
-ESP32 üzerinde çalışacak gömülü yazılım.
+ESP32 üzerinde çalışan gömülü yazılım.
 
-- `esp32_steth/` — ESP-IDF tabanlı ESP32 projesi (ADC continuous mode ile
-  veri toplama, DMA buffer yönetimi, gömülü tarafta filtreleme)
+- `esp32_steth/` — Arduino framework ile yazılmış ESP32 sketch'i
+  (`esp32_steth.ino`); MAX9814'ten `analogRead` ile örnekleme yapıp ham PCM
+  veriyi Serial üzerinden gönderiyor. Karşı taraftaki Python alıcısı:
+  `scripts/record_from_esp32.py`.
 
 Bu klasör README'deki "Aşama 4 — ESP32 gerçek zamanlı çalışma" ile
-ilgilidir. ESP-IDF kurulu (`~/esp/esp-idf`, her terminalde
-`. ~/esp/esp-idf/export.sh` gerekiyor) ama proje şu an önce Python ile
-sinyal işleme doğrulamasına (Aşama 3) odaklanıyor; gömülü taraf beklemede.
+ilgilidir. İlk çalışan uçtan uca kayıt zinciri (ESP32 → Serial → Python →
+WAV) bu haliyle kuruldu; ADC continuous mode / DMA buffer / gömülü tarafta
+filtreleme gibi ESP-IDF gerektiren daha ileri adımlar henüz yapılmadı.

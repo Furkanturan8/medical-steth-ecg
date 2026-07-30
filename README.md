@@ -73,7 +73,9 @@ ESP-IDF kullanılarak ESP32 üzerinde sürekli örnekleme, tampon yönetimi ve g
 
 ## Kullanılan Teknolojiler
 
-- **ESP32 / ESP-IDF**: Gömülü veri toplama ve filtreleme
+- **ESP32 / Arduino framework**: Gömülü veri toplama (ilk çalışan versiyon
+  Arduino ile yazıldı; ADC continuous mode/DMA gibi ileri adımlar için
+  ESP-IDF'e geçilmesi planlanıyor)
 - **MAX9814**: Analog mikrofon amplifikatörü ve AGC modülü
 - **KiCad + ngspice**: Şema, PCB ve analog simülasyon
 - **Python + NumPy + SciPy + Matplotlib**: Sinyal analizi ve algoritma doğrulama
@@ -169,6 +171,10 @@ cd esp-idf
 ./install.sh esp32
 . ./export.sh
 ```
+
+### Arduino (firmware/esp32_steth/esp32_steth.ino)
+Arduino IDE'ye ESP32 board desteği eklenip (Boards Manager → `esp32` by
+Espressif Systems) uygun port seçilerek sketch doğrudan yüklenebilir.
 
 ### Python ortamı
 ```bash
