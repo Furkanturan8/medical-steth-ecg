@@ -359,3 +359,35 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   düşürülmesi önerisi not edildi. Temiz bir referans olmadığı için klasik
   SNR ölçülemedi; değerlendirme S1/S2 sonuçlarının makuliyeti üzerinden
   yapıldı.
+
+### 23. Filtrelenmiş sesler WAV olarak kaydedildi (dinlemek için)
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (Bölüm
+  13d), çıktılar `data/processed/own_recordings/` altına.
+- **Ne yapıldı:** Bölüm 13b'de bellekte tutulan filtrelenmiş sinyaller,
+  [-1,1] aralığına kırpılıp 16-bit WAV olarak diske yazıldı.
+- **Neden:** Kullanıcı filtrelenmiş sesleri bir müzik oynatıcıda dinlemek
+  istedi.
+- **Sonuç:** 3 dosya üretildi (`*_filtered.wav`). `data/processed/*`
+  zaten `.gitignore`'da olduğu için otomatik olarak git'e girmiyor —
+  kişisel ses verisi yalnızca local'de kalıyor.
+
+### 24. Doktora sunum için PCG rapor görüntüsü eklendi
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (yeni
+  Bölüm 14), çıktılar `results/own_recordings_reports/` altına, kaynaklar
+  ve yöntem `docs/notes/teorik_notlar.md`'ye ("PCG Görselleştirme") ve
+  `results/01_ilk_analiz_rapor.md`'ye eklendi. `.gitignore`'a
+  `results/own_recordings_reports/*` kuralı eklendi.
+- **Ne yapıldı:** Kullanıcı, kayıtları bir doktora görüntü olarak sunmak
+  istediğini belirtti; önce kısa bir literatür taraması yapıldı (klinik
+  PCG çalışmalarında standart sunum: zaman domeni+zarf+S1/S2 işaretleme +
+  spektrogram birlikte). Bu format `pcg_report_figure` fonksiyonuyla
+  uygulandı: üstte filtrelenmiş sinyal+zarf+S1/S2, altta aynı zaman
+  ekseninde spektrogram (0-500 Hz), başlıkta kalp hızı/sistol/diyastol
+  özeti. Üç kayıt için PNG üretildi.
+- **Neden:** Kullanıcının hedefi — bu kayıtları bir doktora değerlendirme
+  için görsel olarak sunmak; kör kör bir grafik yerine literatürde
+  kullanılan, klinisyenin aşina olduğu bir format seçildi.
+- **Sonuç:** 3 kayıt için de spektrogramda S1/S2 zamanlarıyla örtüşen net
+  dikey enerji patlamaları görüldü (beklenen, sağlıklı örüntü). Görüntüler
+  kişisel sağlık verisi olduğu için yalnızca local'de tutuluyor, git'e
+  girmiyor.

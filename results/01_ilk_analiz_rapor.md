@@ -214,3 +214,11 @@ Hilbert dönüşümü FFT gerektirdiği için ESP32'de pahalı. Alternatif: mutl
 Üç kayıtta da fizyolojik olarak makul kalp hızları (70-87 bpm) ve net sistol/diyastol ayrışması elde edildi. PhysioNet verisiyle (Bölüm 3-8) kurulan filtre + S1/S2 zinciri hiç değiştirilmeden gerçek donanım kaydına uygulanabiliyor — bu, yöntemin sentetik gürültüde değil gerçek ortam koşullarında da işe yaradığını gösteriyor. Zarf grafiklerinde PhysioNet kayıtlarına göre daha fazla küçük/sahte tepecik görülüyor (gerçek ortam gürültüsü + kırpılma nedeniyle), ancak ana S1/S2 darbeleri hâlâ net biçimde ayırt edilebiliyor.
 
 **Sonuç:** Aşama 4 (donanım) fiilen başladı ve Aşama 3'te doğrulanan yöntemler ilk testte gerçek veriyle çalıştı. Bir sonraki adım aday: MAX9814 kazancını düşürüp kırpılmayı azaltmak, ardından bu kayıtlara wavelet/noise-gate gibi dayanıklılık artırıcı adımların (Bölüm 10-11) da fayda sağlayıp sağlamadığını test etmek.
+
+## Doktora Sunum İçin Görselleştirme — PCG Raporu (Spektrogram + Zarf/S1-S2)
+
+Kayıtları bir doktora anlamlı biçimde sunabilmek için literatür kısaca araştırıldı. Klinik PCG (fonokardiyogram) çalışmalarında standart temsil, zaman domeni (zarf + S1/S2 işaretleme) ile spektrogramın (zaman-frekans) birlikte gösterilmesi — üfürüm (murmur) gibi bulgular genelde S1-S2 arasında uzayan ek frekans enerjisi olarak spektrogramda görünür hale gelir. Kaynaklar: [Heart energy signature spectrogram](https://pmc.ncbi.nlm.nih.gov/articles/PMC1899182/), [Phono-spectrographic analysis of heart murmur in children](https://link.springer.com/article/10.1186/1471-2431-7-23), [Real-Time Smart-Digital Stethoscope System](https://pmc.ncbi.nlm.nih.gov/articles/PMC6630694/) (ayrıntı: `docs/notes/teorik_notlar.md` — "PCG Görselleştirme").
+
+Bu format `pcg_report_figure` fonksiyonuyla uygulandı (Bölüm 14): üstte filtrelenmiş sinyal + zarf + S1/S2 işaretleri, altta aynı zaman ekseninde spektrogram (0-500 Hz, `scipy.signal.spectrogram`, 512 örnek pencere, %90 örtüşme), başlıkta kalp hızı/sistol/diyastol özeti. Üç kayıt için üretilip `results/own_recordings_reports/` altına PNG olarak kaydedildi (kişisel sağlık verisi olduğu için `.gitignore`'da — yalnızca local).
+
+**Not:** Bu bir tanı aracı değil, sinyali okunabilir bir görüntüye çeviren bir görselleştirme — yorumlama doktora ait.

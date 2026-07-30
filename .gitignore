@@ -49,3 +49,7 @@ hardware/sim/**/*.raw
 hardware/sim/**/*.log
 
 data/raw/own_recordings/*.wav
+
+# Kişisel ses kayıtlarından üretilen görsel raporlar (KVKK — sadece local)
+results/own_recordings_reports/*
+!results/own_recordings_reports/README.md

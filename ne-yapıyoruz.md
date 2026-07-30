@@ -75,6 +75,15 @@ PhysioNet verisiyle kurduğumuz filtre ve "kalp atışı bulma" (S1/S2) yöntemi
 
 Bir de fark ettiğimiz şey: üç kayıtta da sesin bir kısmı "tavan yapmış" (kırpılma/clipping) — mikrofonun kazancı (ne kadar yükselttiği) muhtemelen biraz fazla ayarlanmış. Bir sonraki kayıtta bunu düşürmeyi deneyeceğiz.
 
+### 13. Filtrelenmiş sesi dinleme ve doktora sunum görüntüsü
+
+İki pratik ihtiyaç ortaya çıktı:
+
+- **Dinleme:** Filtrelenmiş sinyali normal bir müzik dosyası (WAV) olarak kaydettik, artık herhangi bir oynatıcıda dinlenebiliyor.
+- **Doktora gösterim:** Bu kayıtları bir doktora "işte kaydımız bu" diye sunabilmek için, tıp literatüründeki kalp sesi (fonokardiyogram) çalışmalarına baktık. Standart yaklaşım iki grafiği bir arada göstermek: (1) ses dalgası + hangi noktaların "lub" (S1) hangilerinin "dub" (S2) olduğunu işaretleyen grafik, (2) **spektrogram** — sesi zamana göre "hangi frekansta ne kadar enerji var" şeklinde bir ısı haritası olarak gösteren grafik. Üfürüm gibi anormal bulgular genelde bu ısı haritasında S1 ile S2 arasında normalde olmaması gereken ek renkli bölgeler olarak ortaya çıkar.
+
+Bu iki grafiği birleştiren bir "rapor görüntüsü" oluşturduk, 3 kayıt için de üretildi. Önemli: bu bir teşhis aracı değil, sadece sesi doktorun daha kolay değerlendirebileceği bir görüntüye çeviriyor — yorumu doktora ait.
+
 ## Genel Resim
 
 Şu ana kadarki iş, README'deki Aşama 3'ü (yazılımda prova) tamamladı ve Aşama 4'ü (gerçek donanım) fiilen başlattı. Artık gerçek MAX9814 mikrofonu bağlı ve gerçek kayıt alabiliyoruz — bu daha önce planlanmış ama henüz yapılmamış bir adımdı.

@@ -132,3 +132,38 @@ kalan kayıt boyunca hatayı taşımaz. Sistol/diyastol ortalamaları da artık
 etiketlerden bağımsız, doğrudan "medyandan kısa aralıklar" / "medyandan uzun
 aralıklar" ayrımından hesaplanıyor — bu yüzden tek bir yanlış etiket, genel
 istatistiği bozmuyor.
+
+---
+
+## PCG Görselleştirme — Klinik Sunum İçin Spektrogram
+
+Fonokardiyogram (PCG = kalp sesi sinyali) literatüründe, bir kaydı doktora/
+klinisyene "okunabilir" hale getirmek için genelde **iki temsil birlikte**
+kullanılır:
+
+1. **Zaman domeni + zarf (envelope) + S1/S2 işaretleme** — kalp döngüsünün
+   nerede başlayıp bittiğini, sistol/diyastol sürelerini gösterir (bkz.
+   yukarıdaki "Zarf çıkarma" ve "Sistol/Diyastol" notları).
+2. **Spektrogram (zaman-frekans)** — sinyali zamana karşı frekans içeriği
+   olarak (ısı haritası şeklinde) gösterir. Üfürüm (murmur) gibi bulgular
+   genelde S1-S2 arasında **uzayan, ek frekans enerjisi** olarak görülür;
+   normal bir kalp sesinde bu aralık nispeten "sessiz" (düşük enerjili)
+   kalır. Bu yüzden spektrogram, tek başına zaman domeni grafiğinde
+   gözden kaçabilecek bulguları görünür kılabilir.
+
+Bu ikisinin birlikte (üstte zaman/zarf/S1-S2, altta spektrogram, aynı zaman
+eksenini paylaşarak) sunulması, klinik PCG çalışmalarında ve akıllı dijital
+steteskop sistemlerinde standart bir rapor formatıdır:
+
+- Heart energy signature spectrogram for cardiovascular diagnosis —
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC1899182/
+- Phono-spectrographic analysis of heart murmur in children (BMC
+  Pediatrics) — https://link.springer.com/article/10.1186/1471-2431-7-23
+- Real-Time Smart-Digital Stethoscope System for Heart Diseases
+  Monitoring — https://pmc.ncbi.nlm.nih.gov/articles/PMC6630694/
+
+**Önemli sınır:** Bu görselleştirme bir tanı aracı değildir — ham/filtrelenmiş
+sinyali okunabilir bir görüntüye çevirir, yorumlama doktora aittir. Projede
+bu format `signal_processing/notebooks/01_ilk_analiz.ipynb` Bölüm 14'te
+uygulanıyor (`pcg_report_figure` fonksiyonu), çıktılar
+`results/own_recordings_reports/` altına PNG olarak kaydediliyor.
