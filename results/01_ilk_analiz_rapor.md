@@ -186,3 +186,31 @@ Hilbert dönüşümü FFT gerektirdiği için ESP32'de pahalı. Alternatif: mutl
 30ms pencere seçildi (Hilbert'e en yakın). Orta gürültülü, filtrelenmiş sinyalde (gerçek kullanım senaryosuna daha yakın) karşılaştırma: Hilbert 75 tepe / 63.3 bpm / sistol 349ms / diyastol 599ms; Hafif (30ms) 76 tepe / 64.8 bpm / sistol 346ms / diyastol 580ms — neredeyse birebir aynı.
 
 **Sonuç:** Causal filtre + hafif zarf dedektörü, offline/Hilbert versiyonlarına çok yakın performans veriyor ve ikisi de ESP32'de gerçek zamanlı çalışacak şekilde tasarlandı. `manual_sos_filter` mantığı (biquad kademeleri) ve `compute_envelope_lightweight` mantığı (abs + hareketli ortalama), Aşama 4'te (ESP32) doğrudan C koduna taşınabilecek temel yapı taşları.
+
+## Gerçek Donanım Kayıtları — Kendi Steteskopumuzla Alınan Sesler
+
+Şimdiye kadarki tüm analiz PhysioNet'ten indirilen temiz kayıtlara sentetik gürültü ekleyerek yapılmıştı. ESP32 + MAX9814 ile alınan 3 gerçek kayıt (`data/raw/own_recordings/`: `abdul_heart1.wav`, `muhammed_heart1.wav`, `nadeemHeart1.wav`) üzerinde aynı band-pass+notch filtre zinciri (Bölüm 3) ve S1/S2 tespiti (Bölüm 8) çalıştırıldı. Bu kayıtların temiz bir referansı olmadığı için klasik SNR ölçülemedi; değerlendirme ham/filtrelenmiş karşılaştırması ve S1/S2 sonuçlarının fizyolojik makuliyeti üzerinden yapıldı.
+
+### Kırpılma (clipping) kontrolü
+
+| Kayıt | Örnekleme | Süre | Kırpılma oranı |
+|---|---|---|---|
+| abdul_heart1.wav | 16000 Hz | 30.0 s | %2.17 |
+| muhammed_heart1.wav | 16000 Hz | 60.1 s | %3.29 |
+| nadeemHeart1.wav | 16000 Hz | 60.0 s | %0.68 |
+
+Üç kayıtta da örneklerin bir kısmı 16-bit sınırına (±32768) dayanmış — MAX9814'ün mevcut kazanç ayarının (muhtemelen 60 dB, `GAIN` pini açıkta) bu ses seviyesi için yüksek olabileceğine işaret ediyor. `GAIN` pini VCC'ye bağlanıp 40 dB'ye düşürülmesi bir sonraki kayıtta denenmeli (bkz. `docs/notes/teorik_notlar.md` — MAX9814 Kazanç Ayarı).
+
+### S1/S2 tespiti sonuçları
+
+| Kayıt | Tespit edilen tepe | Kalp hızı | Sistol | Diyastol |
+|---|---|---|---|---|
+| abdul_heart1.wav | 86 | 86.6 bpm | 278 ms | 415 ms |
+| muhammed_heart1.wav | 158 | 79.3 bpm | 299 ms | 458 ms |
+| nadeemHeart1.wav | 141 | 70.5 bpm | 308 ms | 543 ms |
+
+### Yorum
+
+Üç kayıtta da fizyolojik olarak makul kalp hızları (70-87 bpm) ve net sistol/diyastol ayrışması elde edildi. PhysioNet verisiyle (Bölüm 3-8) kurulan filtre + S1/S2 zinciri hiç değiştirilmeden gerçek donanım kaydına uygulanabiliyor — bu, yöntemin sentetik gürültüde değil gerçek ortam koşullarında da işe yaradığını gösteriyor. Zarf grafiklerinde PhysioNet kayıtlarına göre daha fazla küçük/sahte tepecik görülüyor (gerçek ortam gürültüsü + kırpılma nedeniyle), ancak ana S1/S2 darbeleri hâlâ net biçimde ayırt edilebiliyor.
+
+**Sonuç:** Aşama 4 (donanım) fiilen başladı ve Aşama 3'te doğrulanan yöntemler ilk testte gerçek veriyle çalıştı. Bir sonraki adım aday: MAX9814 kazancını düşürüp kırpılmayı azaltmak, ardından bu kayıtlara wavelet/noise-gate gibi dayanıklılık artırıcı adımların (Bölüm 10-11) da fayda sağlayıp sağlamadığını test etmek.

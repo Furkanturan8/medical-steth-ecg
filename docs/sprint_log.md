@@ -337,3 +337,25 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   bu yeni kayıtlarla da test edilmesi sıradaki iş. Aşama 4 (ESP32 gerçek
   zamanlı çalışma) fiilen başlamış oldu; ADC continuous mode/DMA gibi
   ESP-IDF gerektiren ileri adımlar henüz yapılmadı.
+
+### 22. Gerçek donanım kayıtları analiz edildi
+- **Nerede:** `signal_processing/notebooks/01_ilk_analiz.ipynb` (yeni Bölüm
+  13), sonuç `results/01_ilk_analiz_rapor.md`'ye eklendi.
+- **Ne yapıldı:** `data/raw/own_recordings/` altındaki 3 gerçek kayıt
+  (abdul, muhammed, nadeem) üzerinde önce kırpılma (clipping) kontrolü
+  yapıldı, sonra Bölüm 3'teki band-pass+notch filtre zinciri ve Bölüm
+  8'deki S1/S2 tespiti (Hilbert zarf + medyan eşikli etiketleme) hiç
+  değiştirilmeden bu kayıtlara uygulandı. Her kayıt için ham/filtrelenmiş
+  zaman+FFT grafikleri ve S1/S2 işaretli zarf grafiği çizildi.
+- **Neden:** Kullanıcının isteği — artık elde gerçek donanım kaydı olduğu
+  için, PhysioNet verisiyle doğrulanmış yöntemin gerçek veride de işe
+  yarayıp yaramadığını görsel olarak göstermek.
+- **Sonuç:** Üç kayıtta da fizyolojik olarak makul kalp hızı (70.5-86.6
+  bpm) ve net sistol/diyastol ayrışması elde edildi — mevcut filtre+S1/S2
+  zinciri sentetik gürültüde olduğu gibi gerçek kayıtlarda da çalışıyor.
+  Ayrıca üç kayıtta da bir miktar kırpılma tespit edildi (%0.68-3.29) —
+  MAX9814 kazancının (muhtemelen 60 dB) yüksek olabileceğine işaret
+  ediyor; bir sonraki kayıtta `GAIN` pini VCC'ye bağlanıp 40 dB'ye
+  düşürülmesi önerisi not edildi. Temiz bir referans olmadığı için klasik
+  SNR ölçülemedi; değerlendirme S1/S2 sonuçlarının makuliyeti üzerinden
+  yapıldı.

@@ -69,6 +69,12 @@ Bekleme bitti — MAX9814 mikrofonu ESP32'ye bağlayıp gerçek bir ses kaydı a
 
 Bu sayede artık elimizde PhysioNet'ten indirdiğimiz 3 dış kayda ek olarak, kendi steteskopumuzla kaydettiğimiz 3 gerçek kalp sesi kaydı da var (kullanıcı ve iki arkadaşından).
 
+### 12. Gerçek kayıtları analiz etme
+
+PhysioNet verisiyle kurduğumuz filtre ve "kalp atışı bulma" (S1/S2) yöntemini, hiç değiştirmeden kendi 3 gerçek kaydımıza da uyguladık. Sonuç: üçünde de makul kalp hızları çıktı (70-87 vuruş/dakika) ve "lub-dub" ayrımı netti — yani yöntem sadece sahte gürültüde değil, gerçek dünyada da işe yarıyor.
+
+Bir de fark ettiğimiz şey: üç kayıtta da sesin bir kısmı "tavan yapmış" (kırpılma/clipping) — mikrofonun kazancı (ne kadar yükselttiği) muhtemelen biraz fazla ayarlanmış. Bir sonraki kayıtta bunu düşürmeyi deneyeceğiz.
+
 ## Genel Resim
 
 Şu ana kadarki iş, README'deki Aşama 3'ü (yazılımda prova) tamamladı ve Aşama 4'ü (gerçek donanım) fiilen başlattı. Artık gerçek MAX9814 mikrofonu bağlı ve gerçek kayıt alabiliyoruz — bu daha önce planlanmış ama henüz yapılmamış bir adımdı.
