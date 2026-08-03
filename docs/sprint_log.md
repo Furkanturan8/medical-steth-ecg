@@ -391,3 +391,69 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   dikey enerji patlamaları görüldü (beklenen, sağlıklı örüntü). Görüntüler
   kişisel sağlık verisi olduğu için yalnızca local'de tutuluyor, git'e
   girmiyor.
+
+### 25. Doktora faydalı PCG özellikleri için literatür taraması yapıldı
+- **Nerede:** `docs/notes/teorik_notlar.md` (yeni "Klinik Olarak Faydalı
+  PCG Özellikleri" bölümü).
+- **Ne yapıldı:** Kullanıcı, spektrogram+S1/S2 dışında piyasada/literatürde
+  doktora faydalı olabilecek başka hangi PCG analizlerinin kullanıldığını
+  sordu. Web araştırması yapıldı: zamanlama tabanlı özellikler (kalp hızı
+  değişkenliği, sistolik zaman aralıkları), üfürüm karakterizasyonu
+  (zamanlama/şekil/Levine şiddeti/perde), ekstra sesler (S3/S4 gallop,
+  S2 çiftleşmesi), spektral öznitelikler, ML sınıflandırma (PhysioNet
+  Challenge, CirCor DigiScope) ve ticari örnek olarak Eko'nun FDA onaylı
+  EMAS yazılımı incelendi.
+- **Neden:** Kullanıcının sıradaki yön kararını (hangi klinik özelliği
+  eklemenin değerli olacağını) bilgiye dayalı vermesini sağlamak.
+- **Sonuç:** Elimizdeki S1/S2 zaman damgaları ve zarfla en düşük maliyetle
+  eklenebilecek iki adım önerildi: (1) sistol/diyastol aralıklarındaki
+  zarf enerjisine bakarak basit bir üfürüm-varlığı göstergesi, (2) S2
+  sonrası ek tepe arayarak S3/S4 taraması. Henüz koda uygulanmadı — bu bir
+  literatür/yön araştırması, sıradaki iş kullanıcının hangisini seçtiğine
+  bağlı.
+
+### 26. Web arayüzü iskeleti kuruldu (Django + Next.js)
+- **Nerede:** `web/` (yeni — `backend/`, `frontend/`), `.claude/rules/`,
+  `.claude/skills/`, `.claude/settings.json`, `docs/decisions.md` (yeni
+  içerik), kök `README.md` (klasör yapısı), `.gitignore`.
+- **Ne yapıldı:** Kullanıcının hedefi (doktorun kayıtları web arayüzünden
+  incelemesi) için mimari kararlar netleştirildi (bkz. `docs/decisions.md`)
+  ve iskelet kuruldu:
+  - `.claude/rules/django`, `.claude/rules/nextjs-ts-react` ve karşılık gelen
+    `skills/` sembolik bağlantıları eklendi; iki stack template'inin
+    `settings.json`'ı birleştirilerek proje köküne kopyalandı.
+  - Local Postgres (`medical_steth_dev` db, `medical_steth_web` rolü)
+    oluşturuldu; `pg_hba.conf` yalnızca local dev için `trust`'a çevrildi
+    (kullanıcı onayıyla, yedek alınarak).
+  - Django backend: `config` projesi, `apps/accounts` (custom `User`, JWT
+    token endpoint'leri) ve `apps/recordings` (`Patient`, `Recording`,
+    `AnalysisResult` modelleri) stack konvansiyonuna uygun klasör yapısıyla
+    (`models/`, `serializers/v1/`, `views/v1/`, `filters/`, `services/`)
+    oluşturuldu. `django-cors-headers`, `django-filter`, `django-extensions`
+    (`TimeStampedModel`) entegre edildi. Migrasyonlar uygulandı, admin
+    kayıtları eklendi, `runserver` ile smoke test yapıldı.
+  - Next.js frontend: `create-next-app` ile TypeScript/App Router/Tailwind
+    v4/shadcn kuruldu; `next-auth` v5 Credentials provider ile Django JWT
+    endpoint'ine bağlandı (access token 25 dk'da bir refresh token ile
+    otomatik yenileniyor). `app/(auth)/login` (Server Action +
+    `useActionState`) ve `app/(dashboard)` (layout'ta `auth()` ile korumalı)
+    route group'ları, `lib/api.ts` fetch wrapper'ı eklendi.
+  - Test hesabı (`doktor` / superuser) oluşturulup Django token endpoint'i
+    curl ile doğrulandı; frontend `npx tsc --noEmit`, `npm run lint`,
+    `npm run build` ile temiz geçti; `/` → `/login` redirect ve login
+    formunun render'ı HTTP seviyesinde doğrulandı.
+- **Neden:** Kullanıcının kararı — backend Python/Django, db PostgreSQL,
+  frontend Next.js; auth MVP'den itibaren, dosyalar yerel diskte, dev ortamı
+  Docker'sız (native venv + local Postgres), backend kök `.venv`'i
+  `signal_processing` ile paylaşıyor (ayrı ayrı sorulup onaylandı).
+- **Sonuç:** Çalışan bir iskelet var (backend API + frontend login/dashboard
+  kabuğu), ama henüz gerçek özellik (hasta/kayıt listesi, PCG görüntüleyici,
+  ölçüm kartı vb. — önceki oturumda önerilen 5 özellik) eklenmedi. Ayrıca iki
+  bilinen sınır: (1) `create-next-app` bir ara adımda projeyi yanlışlıkla
+  `web/frontend/next-app/` alt klasörüne kurdu, elle düzeltilip
+  `web/frontend/`'e taşındı — kurulum komutlarını tekrar çalıştırırken dizin
+  teyidi önemli; (2) tam tarayıcı testi (gerçek login tıklaması) yapılamadı
+  çünkü `chromium-cli`/Playwright bu makinede kurulu değil ve kurulumu
+  `npm install` gerektirdiği için `.claude/settings.json`'daki deny kuralına
+  takılıyor — yalnızca HTTP seviyesinde (curl) doğrulama yapıldı, kullanıcının
+  tarayıcıda elle test etmesi gerekiyor.

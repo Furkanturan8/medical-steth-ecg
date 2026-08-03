@@ -109,10 +109,13 @@ medical-steth-ecg/
 │   ├── processed/
 │   └── exports/
 ├── scripts/
-└── results/
+├── results/
+└── web/
+    ├── backend/         # Django + DRF API (doktor girişi, hasta/kayıt/analiz modelleri)
+    └── frontend/        # Next.js (App Router) doktor arayüzü
 ```
 
-Bu yapı; donanım, simülasyon, gömülü yazılım ve veri analizini birbirinden ayırarak ilerlemeyi kolaylaştırır.
+Bu yapı; donanım, simülasyon, gömülü yazılım, veri analizini ve web arayüzünü birbirinden ayırarak ilerlemeyi kolaylaştırır.
 
 ---
 

@@ -167,3 +167,90 @@ sinyali okunabilir bir görüntüye çevirir, yorumlama doktora aittir. Projede
 bu format `signal_processing/notebooks/01_ilk_analiz.ipynb` Bölüm 14'te
 uygulanıyor (`pcg_report_figure` fonksiyonu), çıktılar
 `results/own_recordings_reports/` altına PNG olarak kaydediliyor.
+
+---
+
+## Klinik Olarak Faydalı PCG Özellikleri (Literatür Taraması)
+
+Spektrogram + S1/S2 işaretlemenin ötesinde, fonokardiyogram (PCG) literatüründe
+ve piyasadaki dijital steteskoplarda (örn. Eko CORE + Eko Murmur Analysis
+Software — FDA onaylı) doktora fayda sağlayan başlıca özellik/analiz grupları:
+
+### 1. Zamanlama tabanlı özellikler
+- **Kalp hızı ve R-R/S1-S1 değişkenliği (HRV benzeri)**: aritmi/blok şüphesi
+  için — ardışık kalp döngüsü sürelerindeki düzensizlik.
+- **Sistolik zaman aralıkları (STI)**: EMAT, PEP, LVET gibi — S1/S2
+  zamanlarından türetilen, kalp kasının kasılma performansını gösteren
+  klasik klinik parametreler (ECG ile senkronize edilirse daha kesin).
+- **Sistol/diyastol oranı**: zaten hesaplıyoruz (S1→S2 kısa, S2→S1 uzun);
+  bu oranın normalden sapması taşikardi/bradikardi gibi durumlarda değişir.
+
+### 2. Üfürüm (murmur) karakterizasyonu
+Klinikte bir üfürüm şu eksenlerde tarif edilir — otomatik analizde de aynı
+eksenler kullanılıyor:
+- **Zamanlama**: sistolik mi, diyastolik mi, yoksa sürekli mi (S1-S2 arasında
+  mı, S2-S1 arasında mı enerji var) — elimizdeki S1/S2 zaman damgalarıyla
+  doğrudan hesaplanabilir (o aralıktaki enerji/genlik normalin üstünde mi).
+- **Şekil**: crescendo, decrescendo, plato (zarfın aralık içindeki eğimi).
+- **Şiddet (Levine skalası, I-VI)**: geleneksel olarak elle, kulakla
+  derecelendirilir; otomatik sistemlerde zarf genliği/RMS'ten yaklaşık
+  bir şiddet skoru türetilebilir.
+- **Perde/kalite**: sert (harsh), üfleyen (blowing), kaba (rumbling) gibi
+  nitel tanımlar spektral içerikle (baskın frekans bandı, bant genişliği)
+  ilişkilendirilir.
+
+### 3. Ekstra sesler (S1/S2 dışında)
+- **S3/S4 gallop**: S2'den ~100-200 ms sonra (S3) veya S1'den hemen önce
+  (S4) görülen düşük frekanslı ek sesler — kalp yetmezliği/sertlik
+  bulgusu olabilir. Zarfımızda S1/S2 dışında üçüncü bir tepe aranarak
+  tespit edilebilir.
+- **S2'nin çiftleşmesi (split S2)**: aortik ve pulmoner kapak kapanması
+  arasındaki gecikme. Fizyolojik (nefes alırken artan) veya patolojik
+  (sabit/ters çiftleşme, örn. atriyal septal defekt) olabilir — S2
+  tepesinin kendisinin ince zaman-frekans yapısına bakmak gerekir.
+
+### 4. Frekans/spektral özellikler (spektrogramın ötesi)
+- Bant enerjisi oranları (örn. 100-200 Hz vs 200-500 Hz), üfürüm-gürültü
+  oranı, MFCC benzeri katsayılar — özellikle makine öğrenmesi
+  sınıflandırması için kullanılan sayısal öznitelikler.
+
+### 5. Sınıflandırma / makine öğrenmesi
+PhysioNet/CinC 2016 ve 2022 (Moody) challenge'ları ile CirCor DigiScope
+veri seti gibi kaynaklarda üfürüm varlığı, üfürüm tipi (masum/yapısal) ve
+genel normal/anormal sınıflandırması derin öğrenme ile yapılıyor. Eko'nun
+FDA onaylı EMAS yazılımı yapısal vs. masum üfürüm ayrımında ~85-90 duyarlılık/
+özgüllük bildiriyor — yani bu yön ticari olarak doğrulanmış, tek kayıtla
+"kesin tanı" değil ama tarama amaçlı güvenilir.
+
+### 6. Çoklu oskültasyon noktası
+Klinikte üfürümün hangi noktada (aortik, pulmoner, triküspid, mitral, Erb
+noktası) en iyi duyulduğu ve nereye yayıldığı (radyasyon) tanıyı
+daraltır — tek noktadan kayıt, konum bilgisini kaybeder.
+
+### Projemiz için öncelik önerisi
+Elimizde zaten S1/S2 zaman damgaları ve zarf var; en düşük maliyetli
+sonraki adımlar:
+1. S1-S2 (sistol) ve S2-S1 (diyastol) aralıklarındaki **zarf enerjisini**
+   ölçüp "bu aralık sessiz mi, yoksa beklenmedik enerji mi var" diye
+   bakmak → basit bir üfürüm-varlığı göstergesi.
+2. S2'den sonra ek bir tepe arayarak **S3/S4 taraması**.
+3. Bunları `pcg_report_figure`'a ek bilgi olarak (örn. "sistolik aralıkta
+   enerji: normalin X katı") eklemek — doktora ek bir ipucu sağlar, tanı
+   koymaz.
+
+**Kaynaklar:**
+- Heart murmur detection — PhysioNet Challenge 2022 —
+  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10495026/
+- Murmur identification via Stockwell transform (Scientific Reports) —
+  https://www.nature.com/articles/s41598-024-58274-6
+- Automated time label segmentation of heart sounds (Frontiers) —
+  https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2023.1309750/full
+- Levine scale — https://en.wikipedia.org/wiki/Levine_scale
+- Beyond Heart Murmur Detection: Automatic Murmur Grading from PCG —
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC10482086/
+- Synchronous ECG/PCG acquisition for systolic time intervals —
+  https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12252480/
+- CirCor DigiScope Dataset (murmur detection → classification) —
+  https://arxiv.org/pdf/2108.00813
+- Eko Murmur Analysis Software (FDA clearance) —
+  https://www.patientcareonline.com/view/fda-clears-heart-murmur-detection-ai-for-eko-smart-stethoscope

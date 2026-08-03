@@ -53,3 +53,18 @@ data/raw/own_recordings/*.wav
 # Kişisel ses kayıtlarından üretilen görsel raporlar (KVKK — sadece local)
 results/own_recordings_reports/*
 !results/own_recordings_reports/README.md
+
+# web/backend (Django)
+web/backend/.env
+web/backend/db.sqlite3
+web/backend/media/
+web/backend/staticfiles/
+
+# web/frontend (Next.js)
+web/frontend/node_modules/
+web/frontend/.next/
+web/frontend/.env*.local
+web/frontend/next-env.d.ts
+
+# Claude Code proje ayarları/kuralları (yerel kalsın, git'e girmesin)
+.claude/
