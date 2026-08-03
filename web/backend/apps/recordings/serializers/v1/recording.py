@@ -7,6 +7,9 @@ from .analysis_result import AnalysisResultSerializer
 
 class RecordingListSerializer(serializers.ModelSerializer):
     analysis_status = serializers.CharField(source="analysis.status", default=None, read_only=True)
+    heart_rate_bpm = serializers.FloatField(source="analysis.heart_rate_bpm", default=None, read_only=True)
+    mean_systole_ms = serializers.FloatField(source="analysis.mean_systole_ms", default=None, read_only=True)
+    mean_diastole_ms = serializers.FloatField(source="analysis.mean_diastole_ms", default=None, read_only=True)
 
     class Meta:
         model = Recording
@@ -18,6 +21,9 @@ class RecordingListSerializer(serializers.ModelSerializer):
             "recorded_at",
             "created",
             "analysis_status",
+            "heart_rate_bpm",
+            "mean_systole_ms",
+            "mean_diastole_ms",
         ]
 
 

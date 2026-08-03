@@ -9,9 +9,18 @@ export async function djangoFetch(path: string, init: RequestInit = {}) {
   if (session?.accessToken) {
     headers.set("Authorization", `Bearer ${session.accessToken}`)
   }
-  if (!headers.has("Content-Type")) {
+  // Let fetch set the multipart boundary itself for FormData bodies.
+  if (!headers.has("Content-Type") && !(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json")
   }
 
-  return fetch(`${DJANGO_API_URL}${path}`, { ...init, headers })
+  return fetch(`${DJANGO_API_URL}${path}`, { ...init, headers, cache: "no-store" })
+}
+
+export async function djangoFetchJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await djangoFetch(path, init)
+  if (!res.ok) {
+    throw new Error(`Django API ${path} -> ${res.status}`)
+  }
+  return res.json() as Promise<T>
 }

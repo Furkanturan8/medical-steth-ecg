@@ -15,7 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b px-6 py-4">
+      <header className="flex items-center justify-between border-b px-6 py-4 print:hidden">
         <span className="font-semibold">Medikal Steteskop</span>
         <form
           action={async () => {

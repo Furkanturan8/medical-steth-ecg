@@ -68,3 +68,4 @@ web/frontend/next-env.d.ts
 
 # Claude Code proje ayarları/kuralları (yerel kalsın, git'e girmesin)
 .claude/
+todo.md

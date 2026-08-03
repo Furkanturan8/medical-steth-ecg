@@ -493,3 +493,91 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   çalışıyor (Celery yok), MVP için yeterli hızda. Sıradaki iş: frontend'de
   hasta/kayıt listesi ve rapor görüntüleyici ekranlarının bu API'lere
   bağlanması.
+
+### 28. Frontend: hasta listesi, kayıt yükleme ve rapor görüntüleyici ekranları
+- **Nerede:** `web/frontend/app/(dashboard)/` (`page.tsx`, `patients/new/`,
+  `patients/[id]/`, `recordings/[id]/`), `web/frontend/lib/api.ts` (FormData
+  desteği eklendi), `web/frontend/lib/format.ts` (yeni), `web/frontend/
+  types/api.ts` (yeni), `web/frontend/next.config.ts` (Server Action body
+  boyutu 20mb'a çıkarıldı), `web/frontend/README.md`.
+- **Ne yapıldı:** Önceki oturumda önerilen 5 özellikten ilk üçü uçtan uca
+  bağlandı:
+  - **Hasta listesi** (`/`) — Django'dan `Patient` listesini çekip tablo
+    olarak gösteriyor, "Yeni Hasta" linki var.
+  - **Yeni hasta** (`/patients/new`) — Server Action ile Django'ya POST,
+    başarılıysa hasta detayına yönlendiriyor.
+  - **Hasta detayı** (`/patients/[id]`) — o hastaya ait kayıtları (durum
+    rozetiyle: Bekliyor/Tamamlandı/Hata) listeliyor, altında ses dosyası
+    yükleme formu var; yükleme, Django'nun `run_analysis`'ini senkron
+    çalıştırıp bitmesini bekliyor (`revalidatePath` ile liste tazeleniyor).
+  - **Rapor görüntüleyici** (`/recordings/[id]`) — kalp hızı/sistol/diyastol
+    özet kartları, PCG rapor görseli (`<img>`, Django media URL'i doğrudan)
+    ve filtrelenmiş sesin `<audio>` oynatıcısı.
+  - shadcn `table`/`badge`/`textarea` component'leri eklendi. Bu projenin
+    shadcn kurulumu Radix değil `@base-ui/react` kullanıyor —
+    `Button`'da `asChild` yerine `render` prop'u kullanılıyor (bu ayrım
+    fark edilip düzeltildi, ilk yazımda `asChild` kullanılmıştı).
+- **Neden:** Kullanıcının kararı — backend API'leri tamamlandıktan sonra
+  frontend'i bitirmek; trend karşılaştırma ve PDF dışa aktarma (4. ve 5.
+  özellikler) bu turun kapsamı dışında bırakıldı.
+- **Sonuç:** `npx tsc --noEmit`, `npm run lint`, `npm run build` temiz.
+  Gerçek bir Auth.js oturum çerezi (`/api/auth/csrf` + `/api/auth/callback/
+  credentials` ile curl üzerinden alındı) kullanılarak `/`, `/patients/1`,
+  `/patients/new`, `/recordings/1` sayfaları gerçek Django verisiyle test
+  edildi — hepsi doğru içerikle (hasta adı, kayıt durumu, 87 bpm/278ms/
+  415ms, rapor görseli ve filtrelenmiş ses URL'i) render oldu. **Bilinen
+  sınır:** ses yükleme formunun (Server Action + `FormData`) gerçek bir
+  tarayıcıda tıklanarak test edilmesi yapılamadı — bu ortamda headless
+  tarayıcı aracı yok; kullanıcının bunu elle denemesi gerekiyor.
+
+### 29. Frontend: trend grafiği ve PDF/yazdırma özelliği eklendi
+- **Nerede:** `web/backend/apps/recordings/serializers/v1/recording.py`
+  (`RecordingListSerializer`'a kalp hızı/sistol/diyastol alanları),
+  `web/frontend/app/(dashboard)/patients/[id]/` (`trend-sparkline.tsx` yeni,
+  `page.tsx` güncellendi), `web/frontend/app/(dashboard)/recordings/[id]/`
+  (`print-button.tsx` yeni, `page.tsx` güncellendi),
+  `web/frontend/app/(dashboard)/layout.tsx`, `web/frontend/app/globals.css`.
+- **Ne yapıldı:** Önceki oturumda ertelenen son 2 özellik eklendi:
+  - **Zaman içi karşılaştırma:** Hasta detay sayfasına, o hastanın ≥2
+    tamamlanmış analizi varsa görünen bir "Zaman İçinde Değişim" bölümü
+    eklendi — kalp hızı/sistol/diyastol için 3 ayrı küçük SVG grafiği
+    (small multiples). Önce `dataviz` skill'i çağrılıp yönlendirmesi
+    izlendi: farklı ölçekli 3 metrik olduğu için tek grafik/çift eksen
+    yerine 3 ayrı grafik ("bir eksen" kuralı), her biri tek seri olduğu
+    için legend'sız (başlık zaten tanımlıyor), uç noktada değer etiketi,
+    her nokta için native SVG `<title>` tooltip'i. Kayıt tablosuna da
+    kalp hızı/sistol/diyastol sütunları eklendi — hem liste hem de
+    grafiğin "her değer tıklamadan da ulaşılabilir olmalı" kuralının
+    tablo karşılığı.
+  - Projenin shadcn `--chart-1/2/3` renkleri incelemesiz gri
+    (`oklch(x 0 0)`) olarak geldiği fark edildi; `dataviz` kılavuzunun
+    doğrulanmış kategorik paletiyle (mavi/turuncu/aqua, light+dark)
+    değiştirildi ve `validate_palette.js` ile hem `--pairs all` hem light/
+    dark modda doğrulandı (tüm kontroller geçti; aqua'nın light modda
+    3:1 altı kontrastı için "relief" kuralı zaten sağlanıyor — görünür
+    eksen etiketleri + tablo görünümü).
+  - **PDF/rapor dışa aktarma:** Yeni bağımlılık eklemeden (`window.print()`
+    + Tailwind `print:` varyantı) çözüldü — rapor sayfasına "Yazdır/PDF
+    Olarak Kaydet" butonu eklendi, dashboard header'ı ve ses oynatıcı
+    yazdırırken gizleniyor (`print:hidden`), `globals.css`'e yazdırırken
+    her zaman açık renk şemasına zorlayan bir `@media print` bloğu
+    eklendi (karanlık modda yazdırma/PDF'e kaydetme mürekkep/okunabilirlik
+    sorunu yaratmasın diye).
+- **Neden:** Kullanıcının kararı — kalan 2 özelliği bugün bitirmek.
+  PDF için ayrı bir kütüphane (react-pdf, puppeteer vb.) yerine tarayıcı
+  yazdırmasını seçtim çünkü hem bağımlılık eklemiyor (kurulum izni
+  kısıtı zaten var) hem de klinik rapor yazdırma için standart bir
+  desen.
+- **Sonuç:** `python manage.py check`, `npx tsc --noEmit`, `npm run lint`,
+  `npm run build` temiz. Uçtan uca test: aynı hastaya ikinci bir kayıt
+  (`muhammed_heart1.wav`) yüklenip gerçek bir Auth.js oturum çerezi ile
+  hasta detay sayfası çekildi — trend bölümü 3 grafikle (87→79 bpm,
+  278→299 ms, 415→458 ms) ve tablo yeni sütunlarla doğru render oldu.
+  **Bulunan ve düzeltilen hata:** ilk yazımda SVG `<title>` tooltip'leri
+  JSX'te birden fazla alt eleman (`{tarih}: {değer} {birim}`) olarak
+  yazılınca boş render oluyordu (SSR çıktısında `<title></title>`) —
+  tek bir string değişkenine (`` `${tarih}: ${değer} ${birim}` ``)
+  çevrilince düzeldi; bu, ham HTML çıktısı kontrol edilmeden
+  fark edilemeyecek bir hataydı. Yazdırma butonu tıklanarak (gerçek
+  tarayıcı) test edilemedi — headless tarayıcı aracı yok, kullanıcının
+  elle denemesi gerekiyor.
