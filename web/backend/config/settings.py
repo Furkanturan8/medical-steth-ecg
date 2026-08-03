@@ -2,6 +2,7 @@
 Django settings for config project.
 """
 
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from dotenv import load_dotenv
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BASE_DIR.parent.parent  # medical-steth-ecg/ — so `signal_processing.src` can be imported
+sys.path.insert(0, str(REPO_ROOT))
+
 load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-dev-only-change-me")

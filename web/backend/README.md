@@ -10,8 +10,13 @@ klasörlerine bölünmüş şekilde `apps/` altında tutulur:
 
 - `apps/accounts/` — `User` (custom, `AbstractUser` tabanlı) modeli, JWT
   token endpoint'leri (`/api/accounts/v1/token/`, `/token/refresh/`).
-- `apps/recordings/` — `Patient`, `Recording`, `AnalysisResult` modelleri.
-  Henüz serializer/viewset eklenmedi (API endpoint'leri sıradaki iş).
+- `apps/recordings/` — `Patient`, `Recording`, `AnalysisResult` modelleri;
+  `/api/recordings/v1/patients/` ve `/api/recordings/v1/recordings/` (DRF
+  router). Bir kayıt yüklendiğinde (`multipart/form-data`, `audio_file`
+  alanı) `services/analysis.py` içindeki `run_analysis()` otomatik olarak
+  `signal_processing/src/pipeline.py`'yi çalıştırıp `AnalysisResult`'u
+  (kalp hızı, sistol/diyastol, S1/S2 zaman damgaları, rapor PNG'si,
+  filtrelenmiş WAV) dolduruyor — senkron, kuyruk yok.
 
 ## Kimlik doğrulama
 

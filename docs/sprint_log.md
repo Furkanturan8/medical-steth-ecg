@@ -457,3 +457,39 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   `npm install` gerektirdiği için `.claude/settings.json`'daki deny kuralına
   takılıyor — yalnızca HTTP seviyesinde (curl) doğrulama yapıldı, kullanıcının
   tarayıcıda elle test etmesi gerekiyor.
+
+### 27. Backend'e gerçek PCG analizi bağlandı (uçtan uca çalışıyor)
+- **Nerede:** `signal_processing/src/` (yeni — `filters.py`, `envelope.py`,
+  `segmentation.py`, `report.py`, `pipeline.py`, güncellenmiş `README.md`),
+  `web/backend/apps/recordings/` (`serializers/v1/`, `views/v1/`,
+  `services/analysis.py`, `urls_v1.py`), `web/backend/config/settings.py`
+  (repo kökü `sys.path`'e eklendi), `docs/decisions.md`,
+  `docs/notes/teorik_notlar.md`.
+- **Ne yapıldı:** Kullanıcının seçtiği kapsam — sadece CRUD iskeleti değil,
+  gerçek analiz. `01_ilk_analiz.ipynb`'deki doğrulanmış fonksiyonlar
+  (`bandpass`/`notch`, `compute_envelope`, `detect_peaks`, `label_s1_s2`,
+  `pcg_report_figure`) `signal_processing/src/`'e çıkarıldı ve
+  `data/raw/own_recordings/` kayıtlarıyla (86.6/79.3/70.5 bpm, notebook
+  Bölüm 13 çıktısıyla birebir) doğrulandı. Backend tarafında:
+  - `apps/recordings/serializers/v1/` — Patient (List/Detail/Write),
+    Recording (List/Detail/Write), AnalysisResult serializer'ları.
+  - `apps/recordings/services/analysis.py` — `run_analysis(recording)`:
+    pipeline'ı çalıştırıp `AnalysisResult`'a kalp hızı/sistol/diyastol/S1-S2
+    zaman damgalarını yazıyor, rapor PNG'sini ve filtrelenmiş WAV'ı
+    (`ContentFile` ile, diske ayrı yazmadan) kaydediyor, hata durumunda
+    `status=failed` + `error_message` set ediyor.
+  - `apps/recordings/views/v1/` — `PatientViewSet`, `RecordingViewSet`
+    (multipart upload, `create()` override edilip yükleme sonrası analiz
+    çalıştırılıp tam detay (analiz dahil) dönüyor).
+  - `urls_v1.py` — `DefaultRouter` ile `patients/` ve `recordings/`.
+- **Neden:** Kullanıcının kararı (bkz. `docs/decisions.md`) — CRUD'u analiz
+  olmadan kurmak yerine, doğrulanmış sinyal işleme mantığını hemen bağlayıp
+  uçtan uca çalışan bir sistem elde etmek.
+- **Sonuç:** Test hesabıyla (`doktor`) curl üzerinden hasta oluşturulup
+  gerçek bir kayıt (`abdul_heart1.wav`) yüklendi; backend otomatik olarak
+  86.6 bpm, 278ms sistol, 415ms diyastol hesapladı (notebook referansıyla
+  birebir), rapor PNG'sini (spektrogram+S1/S2 işaretli) ve filtrelenmiş
+  WAV'ı üretti — PNG görsel olarak da kontrol edildi. Analiz senkron
+  çalışıyor (Celery yok), MVP için yeterli hızda. Sıradaki iş: frontend'de
+  hasta/kayıt listesi ve rapor görüntüleyici ekranlarının bu API'lere
+  bağlanması.

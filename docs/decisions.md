@@ -31,6 +31,20 @@ bu geliştirme makinesi için `local`/`host` (127.0.0.1, ::1) satırları
 `pg_hba.conf.bak` olarak yedeklendi. **Bu değişiklik yalnızca local geliştirme
 içindir, production'da kullanılmamalıdır.**
 
+## Backend analiz entegrasyonu: notebook mantığı `signal_processing/src/`'e çıkarıldı
+
+Web backend'inin yüklenen kayıtları otomatik analiz edebilmesi için iki
+seçenek vardı: (1) önce sadece CRUD iskeleti kurup analizi sonraya bırakmak,
+(2) notebook'taki doğrulanmış filtre/S1-S2/rapor mantığını hemen
+`signal_processing/src/`'e çıkarıp backend'e bağlamak. Kullanıcı ikinciyi
+seçti. Notebook'un kendisine dokunulmadı (deneysel kayıt olarak kalıyor);
+`filters.py`/`envelope.py`/`segmentation.py`/`report.py`/`pipeline.py`
+modülleri yazılıp `data/raw/own_recordings/` referans değerleriyle (86.6/79.3/
+70.5 bpm) birebir doğrulandı. Analiz, yükleme isteği sırasında **senkron**
+çalışıyor (Celery/kuyruk yok) — kısa PCG kayıtları için filtre+zarf+spektrogram
+saniyenin altında sürüyor, MVP için ek altyapı karmaşıklığına gerek
+görülmedi.
+
 ### Kısıtlama: bağımlılık kurulumu
 
 Bu projenin `.claude/settings.json`'ı (stack kütüphanesinden kopyalanan

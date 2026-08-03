@@ -168,6 +168,13 @@ bu format `signal_processing/notebooks/01_ilk_analiz.ipynb` Bölüm 14'te
 uygulanıyor (`pcg_report_figure` fonksiyonu), çıktılar
 `results/own_recordings_reports/` altına PNG olarak kaydediliyor.
 
+**Web backend entegrasyonu:** Aynı mantık `signal_processing/src/` altına
+(`filters.py`, `envelope.py`, `segmentation.py`, `report.py`, `pipeline.py`)
+çıkarıldı ve `web/backend/apps/recordings/services/analysis.py` tarafından
+kullanılıyor — bir kayıt yüklendiğinde backend aynı filtre+S1/S2+rapor
+zincirini otomatik çalıştırıp `AnalysisResult`'a yazıyor. Notebook'un kendisi
+değiştirilmedi; iki kopya şu an elle senkronize ediliyor.
+
 ---
 
 ## Klinik Olarak Faydalı PCG Özellikleri (Literatür Taraması)
