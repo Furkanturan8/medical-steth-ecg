@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -12,8 +13,9 @@ import {
 } from "@/components/ui/table"
 import { djangoFetch, djangoFetchJson } from "@/lib/api"
 import { formatDateTime } from "@/lib/format"
-import type { PatientDetail, RecordingListItem } from "@/types/api"
+import type { Paginated, PatientDetail, RecordingListItem } from "@/types/api"
 
+import { DeletePatientButton } from "./delete-patient-button"
 import { TrendSparkline } from "./trend-sparkline"
 import { UploadRecordingForm } from "./upload-recording-form"
 
@@ -30,9 +32,12 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
   if (patientRes.status === 404) notFound()
   const patient: PatientDetail = await patientRes.json()
 
-  const recordings = await djangoFetchJson<RecordingListItem[]>(
-    `/api/recordings/v1/recordings/?patient=${id}`,
+  // page_size=200: a single patient's recordings rarely exceed that, and the
+  // trend chart below needs the full history, not just one page of it.
+  const recordingsPage = await djangoFetchJson<Paginated<RecordingListItem>>(
+    `/api/recordings/v1/recordings/?patient=${id}&page_size=200`,
   )
+  const recordings = recordingsPage.results
 
   // Oldest → newest, only completed analyses have numbers to trend.
   const withAnalysis = [...recordings]
@@ -41,9 +46,17 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold">{patient.full_name}</h1>
-        {patient.notes && <p className="mt-1 text-muted-foreground">{patient.notes}</p>}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">{patient.full_name}</h1>
+          {patient.notes && <p className="mt-1 text-muted-foreground">{patient.notes}</p>}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" render={<Link href={`/patients/${patient.id}/edit`} />}>
+            Düzenle
+          </Button>
+          <DeletePatientButton patientId={patient.id} />
+        </div>
       </div>
 
       <div>

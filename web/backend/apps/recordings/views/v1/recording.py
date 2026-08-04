@@ -1,4 +1,5 @@
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -12,9 +13,19 @@ from apps.recordings.services.analysis import run_analysis
 
 
 class RecordingViewSet(viewsets.ModelViewSet):
-    queryset = Recording.objects.select_related("patient", "analysis").order_by("-created")
+    queryset = Recording.objects.select_related("patient", "analysis").order_by(
+        "-created"
+    )
     parser_classes = [MultiPartParser, FormParser]
     filterset_fields = ["patient"]
+
+    def get_queryset(self):
+        # Bir doktor yalnızca kendi hastalarına ait kayıtları görür/yönetir.
+        return (
+            Recording.objects.select_related("patient", "analysis")
+            .filter(patient__created_by=self.request.user)
+            .order_by("-created")
+        )
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -30,5 +41,17 @@ class RecordingViewSet(viewsets.ModelViewSet):
 
         run_analysis(recording)
 
-        output = RecordingDetailSerializer(recording, context=self.get_serializer_context())
+        output = RecordingDetailSerializer(
+            recording, context=self.get_serializer_context()
+        )
         return Response(output.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"])
+    def retry_analysis(self, request, pk=None):
+        """POST /recordings/{id}/retry_analysis/"""
+        recording = self.get_object()
+        run_analysis(recording)
+        output = RecordingDetailSerializer(
+            recording, context=self.get_serializer_context()
+        )
+        return Response(output.data)

@@ -1,3 +1,18 @@
+export interface Paginated<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
+export interface User {
+  id: number
+  username: string
+  first_name: string
+  last_name: string
+  email: string
+}
+
 export interface Patient {
   id: number
   full_name: string

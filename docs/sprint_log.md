@@ -581,3 +581,80 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   fark edilemeyecek bir hataydı. Yazdırma butonu tıklanarak (gerçek
   tarayıcı) test edilemedi — headless tarayıcı aracı yok, kullanıcının
   elle denemesi gerekiyor.
+
+### 30. `todo.md`'deki eksikler tarandı ve uygulandı (güvenlik, eksik akışlar, ölçeklenebilirlik, polish)
+- **Nerede:** Çoğu backend/frontend dosyası; öne çıkanlar:
+  `apps/recordings/serializers/v1/recording.py` (validasyon),
+  `apps/recordings/signals.py` (yeni), `apps/accounts/{serializers,views}/v1/
+  user.py` (yeni, `/me`), `config/pagination.py` (yeni),
+  `config/settings.py` (throttling+pagination), `apps/recordings/admin.py`,
+  `web/frontend/app/(dashboard)/layout.tsx`, `.../page.tsx` (arama+
+  pagination), `.../patients/[id]/` (düzenle/sil, `recorded_at`, ilerleme
+  çubuğu), `.../recordings/[id]/` (retry/sil/S1-S2/ham ses), `app/error.tsx`,
+  `app/not-found.tsx`, `app/layout.tsx` (metadata), `.../login/page.tsx`.
+- **Ne yapıldı:** Önce kod taranarak (`todo.md`'ye yazılan) 5 gruplu, öncelik
+  sıralı bir plan çıkarıldı, sonra kullanıcının "başla" onayıyla en büyük
+  kapsam kararı (yetki/test altyapısı) hariç tamamı uygulandı:
+  - **Güvenlik:** `audio_file` için uzantı(.wav)/boyut(50MB) validasyonu;
+    `session.error === "RefreshAccessTokenError"` durumunda otomatik
+    `signOut`; DRF `AnonRateThrottle`/`UserRateThrottle` (login için
+    10/dk); `retry_analysis` action'ı (`@action detail=True`).
+  - **Eksik akışlar:** `/me` endpoint'i + header'da "Dr. {isim}"; yükleme
+    formuna `recorded_at`; `post_delete` sinyalleriyle dosya temizliği
+    (Recording/AnalysisResult silinince disk dosyaları da siliniyor —
+    Django FileField bunu otomatik yapmadığı için elle eklendi); hasta
+    düzenleme (`/patients/[id]/edit`) ve silme, kayıt silme; rapor
+    sayfasına S1/S2 tespit sayısı ve ham (filtrelenmemiş) ses oynatıcı.
+  - **Ölçeklenebilirlik:** DRF `PageNumberPagination` (global, `page_size=20`,
+    `page_size` query param override'ı destekleniyor — hasta detayındaki
+    kayıt listesi/trend grafiği için `page_size=200` ile "hepsini getir"
+    kullanılıyor); hasta listesinde `SearchFilter` (`full_name`) + URL
+    `?q=`/`?page=` tabanlı arama/sayfalama (client state yok).
+  - **Polish:** `layout.tsx`'e `metadata` (sekme başlığı artık "Medikal
+    Steteskop"); kök `error.tsx`/`not-found.tsx`; `/login` zaten girişliyse
+    `/`'e yönlendiriyor; yükleme formunda animasyonlu (indeterminate)
+    ilerleme çubuğu (`@keyframes upload-progress`); Django admin'e
+    `list_display`/`search_fields`; karanlık mod kod incelemesiyle
+    doğrulandı (yeni component'lerde sabit/hardcoded renk yok, hepsi tema
+    token'ı veya doğrulanmış CSS değişkeni).
+- **Neden:** Kullanıcının kararı — önceki oturumlarda tespit edilen
+  eksiklerin (bir kısmı ben, bir kısmı kod taramasıyla bulundu) sırayla
+  kapatılması.
+- **Sonuç:** `python manage.py check` + `makemigrations --check` temiz
+  (yeni migration gerekmedi), `npx tsc --noEmit`/`npm run lint`/
+  `npm run build` temiz. Uçtan uca curl testleri: `/me` doğru veri
+  döndürüyor; kötü uzantılı dosya 400 ile reddediliyor; bozuk içerikli
+  ama `.wav` uzantılı dosya `status=failed` + anlamlı hata mesajıyla
+  kaydediliyor, `retry_analysis` aynı hatayı tekrar üretiyor (beklenen —
+  dosya hâlâ bozuk); kayıt silindiğinde diskteki dosyanın gerçekten
+  silindiği doğrulandı; arama/pagination doğru `count`/`results` dönüyor.
+  Gerçek Auth.js oturum çereziyle frontend tarafında da doğrulandı: header
+  "Dr. doktor" gösteriyor, arama sonucu doğru, düzenleme formu değerlerle
+  dolu geliyor, "Analizi Tekrar Dene" butonu başarısız kayıtta görünüyor,
+  var olmayan hasta ID'si özel 404 sayfasına düşüyor. **Ertelenen:**
+  yetki kapsamı kararı (her doktor tüm hastaları mı görsün) ve otomatik
+  testler (pytest-django/frontend test kurulumu `pip`/`npm install`
+  gerektiriyor, kullanıcıya soruldu) — `todo.md`'de işaretlenmedi.
+
+### 31. Yetki kapsamı: doktor yalnızca kendi hastalarını görüyor
+- **Nerede:** `apps/recordings/views/v1/patient.py`,
+  `apps/recordings/views/v1/recording.py`,
+  `apps/recordings/serializers/v1/recording.py`.
+- **Ne yapıldı:** Bir önceki maddede kullanıcıya sorulan iki karardan biri
+  (test altyapısı ertelendi, yetki kapsamı şimdi uygulandı). `PatientViewSet`
+  ve `RecordingViewSet`'e `get_queryset()` eklenip sırasıyla
+  `created_by=request.user` ve `patient__created_by=request.user` ile
+  filtrelendi. Ayrıca `RecordingWriteSerializer`'daki `patient` alanının
+  varsayılan `PrimaryKeyRelatedField` queryset'i (`Patient.objects.all()`)
+  fark edilip `request.user`'a ait hastalarla sınırlandırıldı — aksi halde
+  `get_queryset()` filtresi sadece liste/detay/silme'yi korurdu, bir doktor
+  yine de POST body'sinde başka bir doktorun hasta ID'sini vererek ona kayıt
+  ekleyebilirdi.
+- **Neden:** Kullanıcının kararı — birden fazla doktor aynı sistemi
+  kullanacaksa birbirinin hasta verisini görmemeli.
+- **Sonuç:** İkinci bir test doktoru (`doktor2`) oluşturulup uçtan uca
+  doğrulandı: `doktor2` hasta listesinde 0 sonuç görüyor, `doktor`'un
+  hastasına (`id=1`) doğrudan `GET` isteği 404 dönüyor (403 değil — nesnenin
+  var olduğunu bile sızdırmıyor), `doktor2`'nin o hastaya kayıt yükleme
+  denemesi "Invalid pk" hatasıyla reddediliyor. `doktor`'un kendi
+  hasta/kayıtlarına erişimi değişmeden çalışmaya devam ediyor.
