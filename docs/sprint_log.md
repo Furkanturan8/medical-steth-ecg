@@ -658,3 +658,39 @@ neden yapıldı, sonucu ne oldu. Yeni bir iş bittikçe sona yeni bir madde ekle
   var olduğunu bile sızdırmıyor), `doktor2`'nin o hastaya kayıt yükleme
   denemesi "Invalid pk" hatasıyla reddediliyor. `doktor`'un kendi
   hasta/kayıtlarına erişimi değişmeden çalışmaya devam ediyor.
+
+### 32. Bug: gerçek kullanımda token refresh 429'a düşüp oturumu 401'e kilitliyordu
+- **Nerede:** `apps/accounts/views/v1/token.py` (yeni),
+  `apps/accounts/urls_v1.py`, `config/settings.py`, `web/frontend/auth.ts`.
+- **Ne yapıldı:** Kullanıcı gerçek tarayıcıda uygulamayı kullanırken
+  `/api/recordings/v1/recordings/...` isteğinin 401 döndüğünü, sunucu
+  loglarında hemen öncesinde `/api/accounts/v1/token/refresh/`'in 429 (Too
+  Many Requests) aldığını bildirdi. Kök neden: #30'da eklenen
+  `AnonRateThrottle` (10/dk) global varsayılan olduğu için hem login
+  (`/token/`) hem refresh (`/token/refresh/`) aynı IP başına sayacı
+  paylaşıyordu. Next.js'in `Link` prefetch'i (hasta listesindeki her
+  satır) sayfa yüklenirken ayrı ayrı `auth()` çağırıyor; token süresi
+  dolmaya yakınsa her biri kendi refresh isteğini atıyor ve bu eşzamanlı
+  istekler hızla 10/dk sınırını aşıp gerçek refresh'i de 429'a
+  düşürebiliyordu.
+  - Backend: `TokenObtainPairView`/`TokenRefreshView`'i `ScopedRateThrottle`
+    ile ayrı kapsamlara ayıran `ThrottledTokenObtainPairView`/
+    `ThrottledTokenRefreshView` eklendi — login sıkı kalmaya devam ediyor
+    (`token_obtain`: 10/dk, brute-force koruması), refresh çok daha cömert
+    (`token_refresh`: 120/dk, normal kullanımda birden fazla eşzamanlı
+    isteği kaldırabiliyor).
+  - Frontend: `auth.ts`'teki `refreshAccessToken`'a aynı Node sürecinde
+    eşzamanlı çağrıları tek bir devam eden isteğe birleştiren basit bir
+    "in-flight" kilit eklendi — aynı anda birden fazla bileşen token'ın
+    süresinin dolduğunu görse bile backend'e yalnızca bir refresh isteği
+    gidiyor.
+- **Neden:** Kullanıcı bildirdi — gerçek kullanımda karşılaştığı, kayıt
+  listesini göremediği bir kesinti.
+- **Sonuç:** `python manage.py check`, `npx tsc --noEmit` temiz. Curl ile
+  doğrulandı: aynı refresh token'la eşzamanlı 15 istek atıldığında hepsi
+  200 dönüyor (öncesinde 10'dan sonra 429 olurdu); yanlış şifreyle 12 art
+  arda login denemesinde hâlâ 10 başarısız denemeden sonra 429 geliyor —
+  brute-force koruması korunmuş oldu. **Bilinen sınır:** frontend'deki
+  kilit yalnızca tek bir Node sürecinde geçerli (bu dev kurulumu için
+  yeterli); birden fazla sunucu instance'ı olan bir production ortamında
+  tam bir dağıtık kilit gerekir.

@@ -138,8 +138,10 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "10/min",
+        "anon": "20/min",
         "user": "300/min",
+        "token_obtain": "10/min",
+        "token_refresh": "120/min",
     },
     "DEFAULT_PAGINATION_CLASS": "config.pagination.DefaultPagination",
     "PAGE_SIZE": 20,
